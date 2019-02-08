@@ -149,16 +149,13 @@
             dateRangeText: {
                 get() {
                     if (this.singleInSelected && this.singleOutSelected) {
-                        //return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkIn[0], this.dateRange.checkOut[0])
+                        return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/}`
                     } else if (!this.singleInSelected && this.singleOutSelected) {
                         this.dateRange.checkIn.sort()
-                        //return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkIn[1]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkIn[0],this.dateRange.checkIn[1])
+                        return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkIn[1]/*.toISOString().substr(0,10)*/}`
                     } else {
                         this.dateRange.checkOut.sort()
-                        //return `${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[1]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkOut[0],this.dateRange.checkOut[1])
+                        return `${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[1]/*.toISOString().substr(0,10)*/}`
                     }
                 }
             },
@@ -175,48 +172,15 @@
         },
         methods: {
             dateFromStr(strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
-                if (typeof strDate === 'string') {
-                    let yr  = parseInt(strDate.substring(0,4))
-                    let mon = parseInt(strDate.substring(5,8))
-                    let dt  = parseInt(strDate.substring(8,10))
+                let yr  = parseInt(strDate.substring(0,4))
+                let mon = parseInt(strDate.substring(5,8))
+                let dt  = parseInt(strDate.substring(8,10))
 
-                    let d = new Date(yr, mon-1, dt)
+                let d = new Date(yr, mon-1, dt)
 
-                    d.setMonth(d.getMonth()+deltaMonth, d.getDate()+deltaDay)
+                d.setMonth(d.getMonth()+deltaMonth, d.getDate()+deltaDay)
 
-                    return d
-                }
-
-                return null
-            },
-            dateToStr(date) {
-                if (date && typeof date.toISOString === 'function') {
-                    return this.formatters.titleDate(date.toISOString().substr(0,10))
-                } else if (date && typeof date === 'string') {
-                    return this.formatters.titleDate(date)
-                } 
-                
-                return null
-            },
-            dateRangeToStr(chkIn,chkOut) {
-                const _cin = this.dateToStr(chkIn)
-                const _cout = this.dateToStr(chkOut)
-
-                return `${_cout 
-                            ? _cin 
-                                ? _cin + ' - ' + _cout
-                                : _cout
-                            : _cin 
-                                ? _cin
-                                : null        
-                        }`
-
-            },
-            isSingleInSelected() {
-                return this.dateRange.checkIn.length == 1
-            },
-            isSingleOutSelected() {
-                return this.dateRange.checkOut.length == 1
+                return d
             },
             enableCheckInView() {
                 let _cin = this.dateRange.checkIn.length
