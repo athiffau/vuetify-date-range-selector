@@ -27,7 +27,7 @@
                     :dark="dark"
                 >
                     <v-layout row>
-                        <v-date-picker v-on:input="showMe" v-on:click:date="showMe" v-on:update:pickerDate="showMe2" v-model="dateRange.checkIn" v-if="singleOutSelected"
+                        <v-date-picker v-on:input="showMe" v-on:click:date="showMe" v-on:update:pickerDate="showMe2" v-model="dateRange" v-if="singleOutSelected"
                             :allowed-dates="allowedDates"
                             :color="checkInColor"
                             :dark="dark"
@@ -37,6 +37,7 @@
                             :first-day-of-week="firstDayOfWeek"
                             :header-color="headerColor"
                             :header-date-format="headerDateFormat"
+                            :hover-link="dateConfig.hoverLink"
                             :light="light"
                             :locale="locale"
                             :min="dateConfig.checkIn.min"
@@ -44,6 +45,7 @@
                             :multiple=true
                             :next-icon="nextIcon"
                             :no-title="noTitle" 
+                            :picker-date="dateConfig.checkIn.view"
                             :prev-icon="prevIcon"
                             :range="range"
                             :reactive="reactive"
@@ -54,9 +56,10 @@
                             :type="type"
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
+                            v-on:hoverLink="setHoverLink"
                         >
                         </v-date-picker>
-                        <v-date-picker v-model="dateRange.checkOut" v-if="singleInSelected" 
+                        <v-date-picker v-model="dateRange" v-if="singleInSelected" 
                             :allowed-dates="allowedDates"
                             :color="checkOutColor"
                             :dark="dark"                            
@@ -66,6 +69,7 @@
                             :first-day-week="firstDayOfWeek"
                             :header-color="headerColor"
                             :header-date-format="headerDateFormat"
+                            :hover-link="dateConfig.hoverLink"
                             :light="light"
                             :locale="locale"
                             :min="dateConfig.checkOut.min"
@@ -73,6 +77,7 @@
                             :multiple=true
                             :next-icon="nextIcon"
                             :no-title="noTitle" 
+                            :picker-date="dateConfig.checkOut.view"
                             :prev-icon="prevIcon"
                             :range="range"
                             :reactive="reactive"
@@ -83,6 +88,7 @@
                             :type="type"
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
+                            v-on:hoverLink="setHoverLink"
                         >
                         </v-date-picker>
                     </v-layout>
@@ -102,24 +108,28 @@
         name: 'v-date-range-picker',
         extends: VDatePicker,
         data: () => ({
-            dateRange: {
-                checkIn: [],
-                checkOut: [],
-            },
+            // dateRange: {
+            //     checkIn: [],
+            //     checkOut: [],
+            // },
+            dateRange: [],
             dateConfig: {
                 checkIn: {
+                    view: '',
                     min: null,
                     max: null
                 },
                 checkOut: {
+                    view: '',
                     min: null,
                     max: null
-                }
+                },
+                hoverLink: null
             },
             isOpen: false,
             loaded: false,
-            singleInSelected: false,
-            singleOutSelected: false,
+            singleInSelected: true,
+            singleOutSelected: true,
         }),
         props: {
             label: {
@@ -152,15 +162,15 @@
                 get() {
                     if (this.singleInSelected && this.singleOutSelected) {
                         //return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkIn[0], this.dateRange.checkOut[0])
+                        //return this.dateRangeToStr(this.dateRange.checkIn[0], this.dateRange.checkOut[0])
                     } else if (!this.singleInSelected && this.singleOutSelected) {
-                        this.dateRange.checkIn.sort()
+                        //this.dateRange.checkIn.sort()
                         //return `${this.dateRange.checkIn[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkIn[1]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkIn[0],this.dateRange.checkIn[1])
+                        //return this.dateRangeToStr(this.dateRange.checkIn[0],this.dateRange.checkIn[1])
                     } else {
-                        this.dateRange.checkOut.sort()
+                        //this.dateRange.checkOut.sort()
                         //return `${this.dateRange.checkOut[0]/*.toISOString().substr(0,10)*/} - ${this.dateRange.checkOut[1]/*.toISOString().substr(0,10)*/}`
-                        return this.dateRangeToStr(this.dateRange.checkOut[0],this.dateRange.checkOut[1])
+                        //return this.dateRangeToStr(this.dateRange.checkOut[0],this.dateRange.checkOut[1])
                     }
                 }
             },
@@ -215,22 +225,33 @@
 
             },
             isSingleInSelected() {
-                return this.dateRange.checkIn.length == 1
+                return true
+                //return this.dateRange.checkIn.length == 1
             },
             isSingleOutSelected() {
-                return this.dateRange.checkOut.length == 1
+                return true
+                //return this.dateRange.checkOut.length == 1
             },
             enableCheckInView() {
-                let _cin = this.dateRange.checkIn.length
-                let _cout = this.dateRange.checkOut.length
+                // let _cin = this.dateRange.checkIn.length
+                // let _cout = this.dateRange.checkOut.length
 
-                return ((_cin == 0 || _cin == 1) && (_cout !=- 2)) ? true : false 
+                // return ((_cin == 0 || _cin == 1) && (_cout !=- 2)) ? true : false 
+                if (this.dateRange.length < 2) return true
+
+
             },
             enableCheckOutView() {
-                let _cin = this.dateRange.checkIn.length
-                let _cout = this.dateRange.checkOut.length
+                if (this.dateRange.length < 2) return true
 
-                return ((_cout == 0 || _cout == 1) && (_cin !=- 2)) ? true : false 
+
+                // let _cin = this.dateRange.checkIn.length
+                // let _cout = this.dateRange.checkOut.length
+
+                // return ((_cout == 0 || _cout == 1) && (_cin !=- 2)) ? true : false 
+            },
+            setHoverLink(value) {
+                this.dateConfig.hoverLink = value
             },
             eventsEx(date) {
                 const [,, day] = date.split('-')
@@ -252,32 +273,32 @@
         watch: {
             dateRange: {
                 handler(val, prev) {
-                    this.singleInSelected = this.enableCheckInView()
-                    this.singleOutSelected = this.enableCheckOutView()
+                    // this.singleInSelected = this.enableCheckInView()
+                    // this.singleOutSelected = this.enableCheckOutView()
 
-                    if (val.checkIn.length === 1 && val.checkOut.length === 1) {
-                        let _cin = this.dateFromStr(val.checkIn[0])
-                        let _cout = this.dateFromStr(val.checkOut[0])
+                    // if (val.checkIn.length === 1 && val.checkOut.length === 1) {
+                    //     let _cin = this.dateFromStr(val.checkIn[0])
+                    //     let _cout = this.dateFromStr(val.checkOut[0])
 
-                        if (prev.checkIn[0] !== null && _cin.getMonth() >= _cout.getMonth()) {
+                    //     if (prev.checkIn[0] !== null && _cin.getMonth() >= _cout.getMonth()) {
                             
-                            let _d = this.dateFromStr(val.checkIn[0],0,1)
+                    //         let _d = this.dateFromStr(val.checkIn[0],0,1)
 
-                            _d.setDate(1)
-                            this.dateConfig.checkOut.min = _d.toISOString().substr(0,10)
-                            this.dateRange.checkOut[0] = this.dateConfig.checkOut.min
-                        }
-                    } else {
-                        if (this.dateRange.checkIn.length > 2) {
-                            this.dateRange.checkIn.splice(1,1)
-                            this.singleInSelected = this.enableCheckInView()
-                        }
-                    }
+                    //         _d.setDate(1)
+                    //         this.dateConfig.checkOut.min = _d.toISOString().substr(0,10)
+                    //         this.dateRange.checkOut[0] = this.dateConfig.checkOut.min
+                    //     }
+                    // } else {
+                    //     if (this.dateRange.checkIn.length > 2) {
+                    //         this.dateRange.checkIn.splice(1,1)
+                    //         this.singleInSelected = this.enableCheckInView()
+                    //     }
+                    // }
 
-                    if (this.dateRange.checkOut.length > 2) {
-                        this.dateRange.checkOut.splice(1,1)
-                        this.singleOutSelected = this.enableCheckOutView()
-                    }
+                    // if (this.dateRange.checkOut.length > 2) {
+                    //     this.dateRange.checkOut.splice(1,1)
+                    //     this.singleOutSelected = this.enableCheckOutView()
+                    // }
 
                 },
                 deep: true 
@@ -285,27 +306,56 @@
         },
         mounted() {
             //set pickers one month appart            
+            // let _d = new Date()
+
+            // if (this.dateRange.checkIn[0]) {
+            //     _d = this.dateRange.checkIn[0]
+            // } else {
+            //     this.dateRange.checkIn[0] = _d.toISOString().substr(0,10)
+            // }
+
+            // if (!this.allowBackInTime)
+            // {                
+            //     let _e = _d;
+            //     _e.setDate(1)
+            //     this.dateConfig.checkIn.min = _e.toISOString().substr(0,10)
+            // }
+
+            // _d.setMonth(_d.getMonth()+1)
+            // this.dateRange.checkOut[0] = _d.toISOString().substr(0,10)
+            // this.dateConfig.checkOut.min = this.dateRange.checkOut[0]
+
+            // this.singleInSelected = this.enableCheckInView()
+            // this.singleOutSelected = this.enableCheckOutView()
+
             let _d = new Date()
 
-            if (this.dateRange.checkIn[0]) {
-                _d = this.dateRange.checkIn[0]
-            } else {
-                this.dateRange.checkIn[0] = _d.toISOString().substr(0,10)
-            }
+            //set the start date
+            const startDate = _d.toISOString().substr(0,10)
+            const startYearMonth = _d.toISOString().substr(0,7)
+            this.dateRange.push(startDate)
 
+            //set limits to the checkIn panel
             if (!this.allowBackInTime)
             {                
                 let _e = _d;
                 _e.setDate(1)
                 this.dateConfig.checkIn.min = _e.toISOString().substr(0,10)
             }
+            this.dateConfig.checkIn.view = startYearMonth
 
+            //setup the checkOut panel to the following month
             _d.setMonth(_d.getMonth()+1)
-            this.dateRange.checkOut[0] = _d.toISOString().substr(0,10)
-            this.dateConfig.checkOut.min = this.dateRange.checkOut[0]
+            const endDate = _d.toISOString().substr(0,10)
+            const endYearMonth = _d.toISOString().substr(0,7)
+            
+            this.dateRange.push( endDate )
+            //set the limit of the checkOut panel
+            this.dateConfig.checkOut.view = endYearMonth
+            this.dateConfig.checkOut.min = startDate         
 
-            this.singleInSelected = this.enableCheckInView()
-            this.singleOutSelected = this.enableCheckOutView()
+            // this.singleInSelected = this.enableCheckInView()
+            // this.singleOutSelected = this.enableCheckOutView()
         }
     };
 </script>
