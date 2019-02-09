@@ -45,6 +45,7 @@
                             :next-icon="nextIcon"
                             :no-title="noTitle" 
                             :prev-icon="prevIcon"
+                            :range="range"
                             :reactive="reactive"
                             :scrollable="scrollable"
                             :show-current="showCurrent"
@@ -73,6 +74,7 @@
                             :next-icon="nextIcon"
                             :no-title="noTitle" 
                             :prev-icon="prevIcon"
+                            :range="range"
                             :reactive="reactive"
                             :scrollable="scrollable"
                             :show-current="showCurrent"
@@ -253,7 +255,7 @@
                     this.singleInSelected = this.enableCheckInView()
                     this.singleOutSelected = this.enableCheckOutView()
 
-                    if (val.checkIn.length == 1) {
+                    if (val.checkIn.length === 1 && val.checkOut.length === 1) {
                         let _cin = this.dateFromStr(val.checkIn[0])
                         let _cout = this.dateFromStr(val.checkOut[0])
 
@@ -261,7 +263,6 @@
                             
                             let _d = this.dateFromStr(val.checkIn[0],0,1)
 
-                            //console.log(_d.toISOString().substr(0,10))
                             _d.setDate(1)
                             this.dateConfig.checkOut.min = _d.toISOString().substr(0,10)
                             this.dateRange.checkOut[0] = this.dateConfig.checkOut.min
@@ -309,6 +310,13 @@
     };
 </script>
 
-<style>
+<style lang="styl">
+ .v-btn 
+  &&--range
+    border-radius: unset
+    &:before
+      border-radius: unset 
 
+  &&--range-hover
+    background-color: black 
 </style>
