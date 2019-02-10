@@ -27,9 +27,10 @@
                     :dark="dark"
                 >
                     <v-layout row>
-                        <v-date-picker v-on:input="showMe" v-on:click:date="showMe" v-on:update:pickerDate="showMe2" v-model="dateRange" v-if="singleOutSelected"
+                      <template v-for="index in numberOfMonths">  
+                        <v-date-picker v-model="dateRange" v-if="singleSelected(inputMonth)"
                             :allowed-dates="allowedDates"
-                            :color="checkInColor"
+                            :color="getColorFromIndex(index)"
                             :dark="dark"
                             :day-format="dayFormat"
                             :event-color="eventColor"
@@ -38,16 +39,18 @@
                             :header-color="headerColor"
                             :header-date-format="headerDateFormat"
                             :hover-link="dateConfig.hoverLink"
+                            :key="index"
                             :light="light"
                             :locale="locale"
-                            :min="dateConfig.checkIn.min"
-                            :max="dateConfig.checkIn.max"
+                            :min="index === numberOfMonths ? dateConfig.checkOut.min : dateConfig.checkIn.min"
+                            :max="index === numberOfMonths ? dateConfig.checkOut.max : dateConfig.checkIn.max"
                             :multiple=true
                             :next-icon="nextIcon"
                             :no-title="noTitle" 
-                            :picker-date="dateConfig.checkIn.view"
+                            :picker-date="index === numberOfMonths ? dateConfig.checkOut.view : dateConfig.checkIn.view"
                             :prev-icon="prevIcon"
                             :range="range"
+                            :range-link="rangeLink"
                             :reactive="reactive"
                             :scrollable="scrollable"
                             :show-current="showCurrent"
@@ -57,9 +60,13 @@
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
                             v-on:hoverLink="setHoverLink"
+                            v-on:input="showMe" 
+                            v-on:click:date="showMe" 
+                            v-on:update:pickerDate="showMe2"
                         >
                         </v-date-picker>
-                        <v-date-picker v-model="dateRange" v-if="singleInSelected" 
+                      </template>  
+                        <!-- <v-date-picker v-model="dateRange" v-if="singleInSelected" 
                             :allowed-dates="allowedDates"
                             :color="checkOutColor"
                             :dark="dark"                            
@@ -90,7 +97,7 @@
                             :year-icon="yearIcon"
                             v-on:hoverLink="setHoverLink"
                         >
-                        </v-date-picker>
+                        </v-date-picker> -->
                     </v-layout>
                     <v-card-actions>
                         <v-spacer></v-spacer>
@@ -128,34 +135,39 @@
             },
             isOpen: false,
             loaded: false,
+            rangeLink: [],
             singleInSelected: true,
             singleOutSelected: true,
         }),
         props: {
-            label: {
-                type: String,
-                default: 'Date-range picker'
-            },
-            icon: {
-                type: String,
-                default: 'event'
-            },
             allowBackInTime: {
-                type: Boolean,
-                default: false
-            },
-            noTitle: {
-                type: Boolean,
-                default: false
-            },
-            solo: {
                 type: Boolean,
                 default: false
             },
             color: {
                 type: Array,
                 default: null
-            }
+            },
+            icon: {
+                type: String,
+                default: 'event'
+            },
+            label: {
+                type: String,
+                default: 'Date-range picker'
+            },
+            noTitle: {
+                type: Boolean,
+                default: false
+            },
+            numberOfMonths: {
+                type: Number,
+                default: 2
+            },
+            solo: {
+                type: Boolean,
+                default: false
+            },
         },
         computed: {
             dateRangeText: {
@@ -173,17 +185,7 @@
                         //return this.dateRangeToStr(this.dateRange.checkOut[0],this.dateRange.checkOut[1])
                     }
                 }
-            },
-            checkInColor: {
-                get() {
-                    return this.color ? this.color[0] : undefined
-                }
-            },
-            checkOutColor: {
-                get() {
-                    return this.color ? this.color[1] : undefined
-                }
-            },
+            }
         },
         methods: {
             dateFromStr(strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
@@ -224,6 +226,9 @@
                         }`
 
             },
+            singleSelected(index) {
+                return true
+            },
             isSingleInSelected() {
                 return true
                 //return this.dateRange.checkIn.length == 1
@@ -250,6 +255,9 @@
 
                 // return ((_cout == 0 || _cout == 1) && (_cin !=- 2)) ? true : false 
             },
+            getColorFromIndex(index) {
+
+            },
             setHoverLink(value) {
                 this.dateConfig.hoverLink = value
             },
@@ -273,6 +281,7 @@
         watch: {
             dateRange: {
                 handler(val, prev) {
+                    this.rangeLink = val
                     // this.singleInSelected = this.enableCheckInView()
                     // this.singleOutSelected = this.enableCheckOutView()
 
