@@ -52,7 +52,7 @@
                             :scrollable="scrollable"
                             :show-current="showCurrent"
                             :show-week="showWeek"
-                            :title-date-format="titleDateFormat"
+                            :title-date-format="date => getPickerTitle(date, 0)"
                             :type="type"
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
@@ -87,7 +87,7 @@
                             :scrollable="scrollable"
                             :show-current="showCurrent"
                             :show-week="showWeek"
-                            :title-date-format="titleDateFormat"
+                            :title-date-format="date => getPickerTitle(date, 1)"
                             :type="type"
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
@@ -109,6 +109,7 @@
 </template>
 
 <script>
+    //import pad from './util/pad.ts'
     import VDatePicker from 'vuetify/es5/components/VDatePicker/VDatePicker'   
     export default {
         name: 'v-date-range-picker',
@@ -235,13 +236,14 @@
             dateToMonthYear(date) {
                 if (date && typeof date.toISOString === 'function') {
                     return date.toISOString().substr(0,7)      
+                } else if (date && typeof date === 'string') {
+                    return this.formatters.rangeDate(date)
                 }
                 return null          
             },
             dateRangeToStr(chkIn,chkOut) {
                 const _cin = this.dateToStr(chkIn)
                 const _cout = this.dateToStr(chkOut)
-                console.log(_cin, _cout)
 
                 return `${_cout 
                             ? _cin 
@@ -249,9 +251,23 @@
                                 : ' - ' + _cout
                             : _cin 
                                 ? _cin + ' - '
-                                : null        
+                                : ''       
                         }`
 
+            },
+            monthYearToStr(chkIn,chkOut) {
+                const _cin = this.dateToMonthYear(chkIn)
+                const _cout = this.dateToMonthYear(chkOut)
+
+                return `${_cout
+                            ? _cin
+                                ? _cin + ' - ' + _cout
+                                : ' - ' + _cout
+                            : _cin
+                                ? _cin + ' - '
+                                : ''
+
+                        }`
             },
             getMonth(date1) {
                 if (typeof date1 === 'string') {
@@ -262,7 +278,83 @@
 
                 return date1.getMonth()
             },
-            monthCount(date) {
+            //should be in formatter helpers
+            rangeDateFormatter(dates) {
+                const titleFormats = {
+                    monthYear : { month: 'short', day: 'numeric' }
+                }
+
+                const intlDateFormatter = Intl.DateTimeFormat(this.locale || undefined, titleFormats['monthYear'])
+
+                const pad = (string) => string
+
+                const makeIsoString = (dateString) => {
+                    const [year, month, date] = dateString.trim().split(' ')[0].split('-')
+                    return [pad(year, 4), pad(month || 1), pad(date || 1)].join('-')
+                }
+
+                const titleDateFormatter = (dateString) => intlDateFormatter.format(new Date(`${makeIsoString(dateString)}T00:00:00+00:00`))
+
+                console.log('formatting: ',dates)
+                console.log(titleDateFormatter(dates[0]))
+                if (Array.isArray(dates) && dates.lenght === 2) {
+                    return `${titleDateFormatter(dates[0])} - ${titleDateFormatter(dates[1])}`
+                }
+
+                return null
+                
+            },
+            getPickerTitle(date, index) {
+                // if (index === 0) {
+                //     if (this.monthCount(this.dateConfig.checkIn.view) === 1) {
+                //         return this.defaultTitleDateFormatter(this.dateRange[index])
+                //     } else if (this.monthCount(this.dateConfig.checkIn.view) === 2) {
+                //         return this.rangeDateFormatter(this.dateRange)
+                //     } else {
+                //         return '-'
+                //     } 
+                // } else if (index === 1) {
+                //     if (this.monthCount(this.dateConfig.checkOut.view) === 1) {
+                //         return this.defaultTitleDateFormatter(this.dateRange[index])
+                //     } else if (this.monthCount(this.dateConfig.checkIn.view) === 2) {
+                //         return this.rangeDateFormatter(this.dateRange)
+                //     } else {
+                //         return '-'
+                //     } 
+                // }
+
+                if (index === 0) {
+                    if (this.monthCount(this.dateConfig.checkIn.view) === 1) {
+                        return this.defaultTitleDateFormatter(this.dateRange[index])
+                    } else if (this.monthCount(this.dateConfig.checkIn.view) === 2) {
+                        return this.monthYearToStr(this.dateRange[0], this.dateRange[1])
+                    } else {
+                        return '-'
+                    } 
+                } else if (index === 1) {
+                    if (this.monthCount(this.dateConfig.checkOut.view) === 1) {
+                        if (this.monthCount(this.dateConfig.checkIn.view) === 0) {
+                            return this.defaultTitleDateFormatter(this.dateRange[0])
+                        } else {
+                            return this.defaultTitleDateFormatter(this.dateRange[index])
+                        }
+                    } else if (this.monthCount(this.dateConfig.checkOut.view) === 2) {
+                        return this.monthYearToStr(this.dateRange[0], this.dateRange[1])
+                    } else {
+                        return '-'
+                    } 
+                }
+
+                // if ( (this.singleInSelected && this.singleOutSelected) || (!this.singleInSelected && !this.singleOutSelected) ) {                       
+                //     return this.monthYearToStr(this.dateRange[0], this.dateRange[1])
+                // } else if (!this.singleInSelected) {
+                //     return this.monthYearToStr('',this.dateRange[0])
+                // } else if (!this.singleOutSelected) {
+                //     return this.monthYearToStr(this.dateRange[0], '')
+                // }
+
+            },
+            monthCount(date, index) {
                 let _month = -1
 
                 if (date && typeof date === 'string') {
