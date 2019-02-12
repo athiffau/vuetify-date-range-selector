@@ -1,11 +1,16 @@
 <template>
     <div id="app">
         <v-app :dark="dark">
-            <v-date-range-picker       
+            <v-date-range-picker 
+                :allowBackInTime=true
+                :autoHide=true     
                 :color="color"
+                :no-title=false
                 type="date"
                 width="290px"
                 :range=true
+                @input="log"
+                :num-pickers=4
             ></v-date-range-picker>
         </v-app>
     </div>
@@ -21,8 +26,13 @@ export default {
         date: null,
         menu: false,
         dark: true,
-        color: ["primary", "warning"]
-    })
+        color: ["primary", "warning", "info", "error"]
+    }),
+    methods: {
+        log(e) {
+            console.log(e)
+        }
+    }
 };
 </script>
 
