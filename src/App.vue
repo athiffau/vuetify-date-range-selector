@@ -3,7 +3,7 @@
         <v-app :dark="dark">
             <v-date-range-picker 
                 :allowBackInTime=true
-                :autoHide=false     
+                :autoHide=true     
                 :color="color"
                 :no-title=false
                 :show-week=true

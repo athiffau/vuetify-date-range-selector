@@ -58,8 +58,9 @@
                         </template>
                     </v-navigation-drawer>
                     <v-layout row wrap>
-                      <template v-for="index in numPickers">  
+                      <template v-for="index in dateConfig.visiblePickers">  
                         <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
+                            :allow-date-change="index === 1"
                             :allowed-dates="allowedDates"
                             :color="getPickerColor(index)"
                             :dark="dark"
@@ -86,7 +87,6 @@
                             :show-current="showCurrent"
                             :show-week="showWeek"
                             :title-date-format="date => getPickerTitle(date, index)"
-                            :transitions="transitions"
                             :type="type"
                             :year-format="yearFormat"
                             :year-icon="yearIcon"
@@ -142,14 +142,117 @@
             dateConfig: {
                 hoverLink: null,
                 currentDate: [],
-                updateEvent: []
+                updateEvent: [],
+                visiblePickers: 0
             },
             isOpen: false,
             numPickersVisible: 0,
             pickerOptionsShow: false,
-            pickerOptions: [
-                { title: 'Home', icon: 'dashboard' },
-                { title: 'About', icon: 'question_answer' }
+            pickerOptions: [ 
+                { 
+                    title: 'Quickies', 
+                    icon: 'dashboard',
+                    options: [
+                        {
+                            title: 'Yesterday',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickYesterday() ||*/ null
+                        },
+                        {
+                            title: 'Last Week',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickLastWeek() ||*/ null
+                        },
+                        {
+                            title: 'This Week',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickThisWeek() ||*/ null
+                        },
+                        {
+                            title: 'Last Month',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickLastMonth() ||*/ null
+                        },
+                        {
+                            title: 'This Month',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickThisMonth() ||*/ null
+                        },
+                        {
+                            title: 'Next 3 Months',
+                            type: 'Button',
+                            icon: '',
+                            action: /*this.onClickNext3Months() ||*/ null
+                        }
+                    ] 
+                },
+                { 
+                    title: 'Calendar', 
+                    icon: '',
+                    options: [
+                        {
+                            title: 'Week by number',
+                            type: 'InputSelect',
+                            validation: /*this.validateWeekSelection() ||*/ null,
+                            options: /*this.getWeekList() ||*/ null,
+                            icon: '',
+                            action: /*this.onClickWeekSelect() ||*/ null
+                        },
+                        {
+                            title: 'Months by name',
+                            type: 'Select',
+                            options: /*this.getMonthNames() ||*/ null,
+                            icon: '',
+                            action: /*this.onClickMonthSelect() ||*/ null
+                        },
+                        {
+                            title: 'Years',
+                            type: 'Select',
+                            options: /*this.getYears() ||*/ null,
+                            icon: '',
+                            action: /*this.onClickYearSelect() ||*/ null
+                        }
+                    ] 
+                },
+                {
+                    title: 'Financial',
+                    icon: '',
+                    options: [
+                        {
+                            title: 'Year',
+                            type: 'Select',
+                            options: /*this.getYearList() ||*/ null,
+                            icon: '',
+                            action: null,
+                            ref: 'yearChoice'
+                        },
+                        {
+                            title: 'Quarter',
+                            type: 'InputSelect',
+                            options: /*this.getQuarterList() ||*/ null,
+                            validation: /*this.validateQuarterSeleciton() ||*/ null,
+                            icon: '',
+                            action: /*this.onClickQuarterSelect() ||*/ null,
+                            ref: 'quarterChoice',
+                            needs: 'yearChoice'
+                        },
+                        {
+                            title: 'Periods',
+                            type: 'InputSelect',
+                            options: /*this.getPeriodList() ||*/ null,
+                            validate: /*this.validatePeriodSelection() ||*/ null,
+                            icon: '',
+                            action: /*this.onClickPeriodSelect() ||*/ null,
+                            ref: 'periodChoice',
+                            needs: 'yearChoice'
+                        }
+                    ]                   
+                }
             ],
             weeksOptions: true,
             weekOption: null
@@ -229,8 +332,8 @@
             },
             onClickLastWeek() {
                 this.clearSelection()
-                let _d = this.dateStartPrevWeek(new Date())
-                this.dateRange.push(this.dateToISOStr(_d))
+                let _d = new Date()
+                this.dateRange.push(this.dateToISOStr(this.dateStartPrevWeek( _d)) )
                 this.dateRange.push(this.dateToISOStr(this.dateEndPrevWeek(_d)) )
                 this.emitResults()
                 this.hideOptionsDrawer()
@@ -268,6 +371,13 @@
                 this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth() ))
                 this.emitResults()  
                 this.hideOptionsDrawer()
+            },
+            onClickNext3Months() {
+                this.clearSelection()
+                let _d = this.dateStartOfMonth().add(1, 'months')
+                this.dateRange.push( this.dateToISOStr( _d ))
+                _d.add(3, 'months')
+                this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
             },
             momentStartOf(opt, date) {
                 return moment(date).startOf(opt)
@@ -500,8 +610,9 @@
                 let _toDate = this.dateFromStr(date)    
                 let _fromDate = this.dateFromStr(this.dateConfig[`pickerView${index}`])
                 let _diff = _toDate.getTime() - _fromDate.getTime()
+                let _delta = 0
                 if (_diff != 0) {
-                    let _delta = _diff > 0 ? 1 : -1
+                    _delta = _diff > 0 ? 1 : -1
                     this.deltaOrigin = this.deltaOrigin + _delta
                 }
                 
@@ -509,38 +620,44 @@
                
                 let _nd = null
                 for (let x=index+1; x<=this.numPickers; x++) {
-                    _nd = this.dateFromStr(this.dateConfig[`pickerView${x-1}`],0,1).toISOString()
+                    _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,_delta).toISOString()
                     this.dateConfig[`pickerView${x}`] = _nd.substr(0,7)
                 }
 
-                this.$nextTick( () => {
-                    console.log('visible count: ',this.isAnyPickerVisible())
+                //set the min for the last picker
+                // if (index !== this.numPickers) {
+                //     _nd = this.dateEndOfMonth(this.dateFromStr(this.dateConfig[`pickerView${this.numPickers}`]))
+                //     this.dateConfig[`pickerMin${this.numPickers}`] = this.dateToISOStr(_nd,7)
+                // }
+                // this.$nextTick( () => {
+                //     console.log('visible count: ',this.isAnyPickerVisible())
 
-                    let _count = 0
-                    for (let x=1; x<=this.numPickers; x++) {
-                        if (this.isPickerVisible(x)) _count++
-                    }
-                    console.log('my count is: ',_count)
+                //     let _count = 0
+                //     for (let x=1; x<=this.numPickers; x++) {
+                //         if (this.isPickerVisible(x)) _count++
+                //     }
+                //     console.log('my count is: ',_count)
 
-                    for (let x=index; x<=this.numPickers; x++) {
-                        _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,1).toISOString()
-                        if (_count <= 1) {
-                            console.log(`Removing limit for index ${x}`)
-                            this.dateConfig[`pickerMin${x}`] = undefined
-                        } else {
-                            if (x > 1 || this.autoHide) {
-                                if ((x === 1 && this.allowBackInTime) || x > 1) {
-                                    console.log(`numPickersVision is ${this.numPickersVisible} so limit is enabled`)
-                                    this.dateConfig[`pickerMin${x}`] = _nd.substr(0,10)
-                                } else {
-                                    this.dateConfig[`pickerMin${x}`] = undefined
-                                }
-                            } else {
-                                this.dateConfig[`pickerMin${x}`] = undefined
-                            }
-                        }
-                    }
-                })
+                //     for (let x=index; x<=this.numPickers; x++) {
+                //         _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,1).toISOString()
+                //         if (_count <= 1) {
+                //             console.log(`Removing limit for index ${x}`)
+                //             this.dateConfig[`pickerMin${x}`] = undefined
+                //         } else {
+                //             if (x > 1 || this.autoHide) {
+                //                 if ((x === 1 && this.allowBackInTime) || x > 1) {
+                //                     console.log(`numPickersVision is ${this.numPickersVisible} so limit is enabled`)
+                //                     this.dateConfig[`pickerMin${x}`] = _nd.substr(0,10)
+                //                 } else {
+                //                     this.dateConfig[`pickerMin${x}`] = undefined
+                //                 }
+                //             } else {
+                //                 this.dateConfig[`pickerMin${x}`] = undefined
+                //             }
+                //         }
+                //     }
+                // })
+
             }
         },
         watch: {
@@ -561,6 +678,7 @@
         created() {
             for (let i=1; i<=this.numPickers; i++) {
                 let _d = null
+                //user supplied a start date
                 if (this.startDate) {
                     if (typeof this.startDate === 'string') {
                         _d = this.dateFromStr(this.startDate)
@@ -569,24 +687,32 @@
                             _d = this.startDate
                         }
                     }
+                //start from today
                 } else {
                     _d = new Date()
                 }
 
+                //setup the picker view date for this index
                 _d.setMonth(_d.getMonth()+i-1)                   
                 this.$set(this.dateConfig, `pickerView${i}`, this.dateToISOStr( _d, 7 ) )
                 
-                if (i > 1 || this.autoHide) {
-                    if ((i === 1 && this.allowBackInTime) || i > 1) {
-                        if (i > 1) _d.setDate(0)
-                        this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d ))
-                    }
-                } else {
-                    this.$set(this.dateConfig, `pickerMin${i}`, undefined)
+                if (i === this.numPickers) {
+                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 7 ))
                 }
+                // if (i > 1 || this.autoHide) {
+                //     if ((i === 1 && this.allowBackInTime) || i > 1) {
+                //         if (i > 1) _d.setDate(0)
+                //         this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d ))
+                //     }
+                // } else {
+                //     this.$set(this.dateConfig, `pickerMin${i}`, undefined)
+                // }
 
-                this.$set(this.dateConfig, `pickerMax${i}`, undefined)
+                // this.$set(this.dateConfig, `pickerMax${i}`, undefined)
             }
+        },
+        mounted() {
+            this.dateConfig.visiblePickers = this.numPickers
         }
     };
 </script>
