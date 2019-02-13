@@ -69,12 +69,13 @@
     "vue": "^2.6.2",
     "vue-loader": "^15.6.2",
     "vue-template-compiler": "^2.6.2",
-    "vuetify": "github:athiffau/vuetify-test",
+    "vuetify": "athiffau/vuetify-daterange",
     "webpack": "^4.29.2",
     "webpack-cli": "^3.2.3",
     "webpack-dev-server": "^3.1.14"
   },
   "dependencies": {
+    "moment": "^2.24.0",
     "tslint": "^5.12.1",
     "vuetify-loader": "^1.2.0"
   }

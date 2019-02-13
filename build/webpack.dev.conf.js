@@ -9,7 +9,7 @@ config.devtool = '#eval-source-map'
 config.mode = 'development'
 
 config.devServer = {
-  host: 'localhost',
+  host: '10.22.144.119',
   port: 1806,
   historyApiFallback: true,
   hotOnly: true,
