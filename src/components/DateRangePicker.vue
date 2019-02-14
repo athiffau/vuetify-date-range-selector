@@ -30,32 +30,77 @@
                         absolute
                         temporary
                     >
-                        <v-list class="pa-1">
-                            <v-list-tile avatar>
-                                <v-list-tile-avatar>
-                                    <v-icon>event</v-icon>
-                                </v-list-tile-avatar>
+                        <v-toolbar
+                          color="primary"
+                          dark
+                          flat
+                        >
+                            <v-list class="pa-1">
+                                <v-list-tile avatar>
+                                    <v-list-tile-avatar>
+                                        <v-icon>event</v-icon>
+                                    </v-list-tile-avatar>
 
-                                <v-list-tile-content>
-                                    <v-list-tile-title>Picker Options</v-list-tile-title>
-                                </v-list-tile-content>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Picker Options</v-list-tile-title>
+                                    </v-list-tile-content>
 
-                                <v-list-tile-action>
-                                    <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                        <v-icon >chevron_left</v-icon>
-                                    </v-btn> 
-                                </v-list-tile-action>
-                            </v-list-tile>
-                        </v-list>
-                        <v-divider></v-divider>
-                        <template>
-                            <v-btn flat block @click="onClickYesterday">Yesterday</v-btn>
-                            <v-btn flat block @click="onClickLastWeek">Last Week</v-btn>
-                            <v-btn flat block @click="onClickThisWeek">This Week</v-btn>
-                            <v-btn flat block @click="onClickLastMonth">Last Month</v-btn>
-                            <v-btn flat block @click="onClickThisMonth">This Month</v-btn>
-                            <v-btn flat block>Next 3 Months</v-btn>
-                        </template>
+                                    <v-list-tile-action>
+                                        <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
+                                            <v-icon >chevron_left</v-icon>
+                                        </v-btn> 
+                                    </v-list-tile-action>
+                                </v-list-tile>
+                            </v-list>
+                        </v-toolbar>
+                        <v-layout column>
+                            <v-list class="pa-1" >
+                                <v-list-group
+                                    v-for="(option,index) in pickerOptions" 
+                                    :key="index"
+                                    v-model="option.active"
+                                    :prepend-icon="option.icon"
+                                    no-action
+                                >
+                                    <v-list-tile slot="activator">
+                                        <v-list-tile-title>{{ option.title }}</v-list-tile-title>
+                                    </v-list-tile>
+
+                                    <v-list-tile-content>
+                                        <v-layout align-center justify-start column fill-height>
+                                            <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="weekOption">
+                                                <v-layout row fill-height v-for="(item,index) in option.options" :key="index" class="mx-3"> 
+                                                    <component 
+                                                        :is="item.type" 
+                                                        flat 
+                                                        block 
+                                                        @click="onAction(item.action)" 
+                                                        :value="item.title" 
+                                                        style="width: 100%;"
+                                                        :hide-details=true
+                                                        :hint="item.hint"
+                                                        :label="item.label"
+                                                        :small-chips=true
+                                                        :items="buildSelectionList(item.items)"
+                                                    >
+                                                    {{ item.title }}
+                                                    </component>
+                                                </v-layout>
+                                            </v-btn-toggle>
+                                        </v-layout>
+                                    </v-list-tile-content>
+
+                                </v-list-group>
+                            </v-list>
+                            <v-spacer></v-spacer>
+                            <!-- <v-list>
+                                <v-divider></v-divider>
+                                <v-layout row align-center justify-right>
+                                    <v-spacer></v-spacer>
+                                    <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
+                                </v-layout>
+                            </v-list> -->
+                        </v-layout>
                     </v-navigation-drawer>
                     <v-layout row wrap>
                       <template v-for="index in dateConfig.visiblePickers">  
@@ -101,24 +146,53 @@
                     <v-card-actions>
                         <div class="text-xs-center mx-2">
                             <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                <v-icon >chevron_right</v-icon>
+                                <v-icon >more_vert</v-icon>
                             </v-btn>
                         </div>
                         <v-divider vertical></v-divider>
-                            <template v-if="weeksOptions && numPickersVisible > 1">
-                                <v-layout row wrap>
-                                    <v-flex xs12 class="px-2">
-                                        <v-btn-toggle v-model="weekOption">
-                                            <v-btn flat @click="onClickYesterday">Yesterday</v-btn>
-                                            <v-btn flat @click="onClickLastWeek">Last Week</v-btn>
-                                            <v-btn flat @click="onClickThisWeek">This Week</v-btn>
-                                            <v-btn flat @click="onClickLastMonth">Last Month</v-btn>
-                                            <v-btn flat @click="onClickThisMonth">This Month</v-btn>
-                                            <v-btn flat>Next 3 Months</v-btn>
-                                        </v-btn-toggle>
-                                    </v-flex>
+                        <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">
+                            
+                            <v-item-group value="false">
+                                <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3">
+                                    <v-item v-for="(option,index) in pickerOptions"
+                                        :key="index"
+                                    >
+                                        <div v-if="option.visible" slot-scoped="{ active }">
+                                            {{option.title}}
+                                            <v-btn flat fab small @click="showHidePanel(option)" slot="activator" class="mr-2">
+                                               
+                                                <v-icon>{{option.show ? 'unfold_less' : 'unfold_more'}}</v-icon>
+                                            
+                                            </v-btn>
+
+                                            <v-btn-toggle v-model="weekOption" v-if="option.show" class="mx-2">
+                                                <component v-for="(item,index) in option.options"
+                                                    :key="index"
+                                                    :is="item.type"
+                                                    @click="onAction(item.action)"
+                                                    :flat=true
+                                                    :dense=true
+                                                    :value="item.title"
+                                                    class="ma-0 mx-1 pa-0 px-1"
+                                                    :hide-details=true
+                                                    :hint="item.hint"
+                                                    :label="item.label"
+                                                    :small-chips=true
+                                                    :items="buildSelectionList(item.items)"
+                                                    :item-text="text"
+                                                    :item-value="value"
+                                                    style="max-width:220px;"
+                                                >
+                                                {{ item.title }}   
+                                                </component> 
+                                            </v-btn-toggle>
+                                        </div>
+                                        <div v-else slot-scoped="{action}"></div>
+                                  
+                                    </v-item>
                                 </v-layout>
-                            </template>                        
+                            </v-item-group>
+                        </template>                        
                         <v-spacer></v-spacer>
                         <v-divider vertical></v-divider>
                         <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
@@ -150,110 +224,165 @@
             pickerOptionsShow: false,
             pickerOptions: [ 
                 { 
-                    title: 'Quickies', 
-                    icon: 'dashboard',
+                    title: 'Helpers', 
+                    icon: 'fastfood',
+                    visible: true,
+                    show: false,
                     options: [
                         {
                             title: 'Yesterday',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickYesterday() ||*/ null
+                            action:'onClickYesterday'
                         },
                         {
                             title: 'Last Week',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickLastWeek() ||*/ null
+                            action: 'onClickLastWeek'
                         },
                         {
                             title: 'This Week',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickThisWeek() ||*/ null
+                            action: 'onClickThisWeek'
                         },
                         {
                             title: 'Last Month',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickLastMonth() ||*/ null
+                            action: 'onClickLastMonth'
                         },
                         {
                             title: 'This Month',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickThisMonth() ||*/ null
+                            action: 'onClickThisMonth'
                         },
                         {
                             title: 'Next 3 Months',
-                            type: 'Button',
+                            type: 'v-btn',
+                            attributes: {
+                                vert: 'flat',
+                                horz: 'flat block'
+                            },
                             icon: '',
-                            action: /*this.onClickNext3Months() ||*/ null
+                            action: 'onClickNext3Months'
                         }
                     ] 
                 },
                 { 
                     title: 'Calendar', 
-                    icon: '',
+                    icon: 'calendar_today',
+                    visible: true,
+                    show: false,
                     options: [
                         {
                             title: 'Week by number',
-                            type: 'InputSelect',
-                            validation: /*this.validateWeekSelection() ||*/ null,
-                            options: /*this.getWeekList() ||*/ null,
+                            label: 'Week by number',
+                            type: 'v-select',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'weekNumbers',
                             icon: '',
-                            action: /*this.onClickWeekSelect() ||*/ null
+                            action: 'onClickWeekSelect'
                         },
                         {
                             title: 'Months by name',
-                            type: 'Select',
-                            options: /*this.getMonthNames() ||*/ null,
+                            label: 'Month by name',
+                            type: 'v-select',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'monthNames',
                             icon: '',
-                            action: /*this.onClickMonthSelect() ||*/ null
+                            action: 'onClickMonthSelect'
                         },
                         {
                             title: 'Years',
-                            type: 'Select',
-                            options: /*this.getYears() ||*/ null,
+                            label: 'Year',
+                            type: 'v-select',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'yearList',
                             icon: '',
-                            action: /*this.onClickYearSelect() ||*/ null
+                            action: 'onClickYearSelect'
                         }
                     ] 
                 },
                 {
                     title: 'Financial',
-                    icon: '',
+                    icon: 'attach_money',
+                    visible: true,
+                    show: false,
                     options: [
                         {
                             title: 'Year',
-                            type: 'Select',
-                            options: /*this.getYearList() ||*/ null,
+                            type: 'v-select',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'yearList',
                             icon: '',
                             action: null,
                             ref: 'yearChoice'
                         },
                         {
                             title: 'Quarter',
-                            type: 'InputSelect',
-                            options: /*this.getQuarterList() ||*/ null,
-                            validation: /*this.validateQuarterSeleciton() ||*/ null,
+                            type: 'v-combobox',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'quarterList',
                             icon: '',
-                            action: /*this.onClickQuarterSelect() ||*/ null,
+                            action: 'onClickQuarterSelect',
                             ref: 'quarterChoice',
                             needs: 'yearChoice'
                         },
                         {
                             title: 'Periods',
-                            type: 'InputSelect',
-                            options: /*this.getPeriodList() ||*/ null,
-                            validate: /*this.validatePeriodSelection() ||*/ null,
+                            type: 'v-combobox',
+                            attributes: {
+                                vert: '',
+                                horz: ''
+                            },
+                            items: 'periodList',
                             icon: '',
-                            action: /*this.onClickPeriodSelect() ||*/ null,
+                            action: 'onClickPeriodSelect',
                             ref: 'periodChoice',
                             needs: 'yearChoice'
                         }
                     ]                   
                 }
             ],
+            visibility: {},
             weeksOptions: true,
             weekOption: null
         }),
@@ -313,6 +442,7 @@
         methods: {
             clearSelection() {
                 this.dateRange = []
+                this.weekOption = null
             },
             hideOptionsDrawer() {
                 this.pickerOptionsShow = false
@@ -376,8 +506,30 @@
                 this.clearSelection()
                 let _d = this.dateStartOfMonth().add(1, 'months')
                 this.dateRange.push( this.dateToISOStr( _d ))
-                _d.add(3, 'months')
+                _d.add(2, 'months')
                 this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
+            },
+            /** Builder functions */
+            weekNumbers() {
+                let result = []
+                let data = this.momentWeekNumbers()
+                for(let x=1;x<data.length;x++) {
+                    result.push({ text: `Week #${x} [${data[x].start.format('MMM Do')} - ${data[x].end.format('MMM Do')}]`, value: x})
+                }
+                return result
+            },
+            /** Date Functions -> move to mixin */
+            momentWeekNumbers(date) {
+                let d = date ? date.year() : moment().year()
+                let data = []
+                let weeks = moment().weeksInYear([d])
+                data[0] = {year: d}
+                for (let x=1; x<=weeks; x++) {
+                    let wStart = moment([d]).week(x).startOf('week')
+                    let wEnd = moment([d]).week(x).endOf('week')
+                    data[x] = {start: wStart, end: wEnd}
+                }
+                return data
             },
             momentStartOf(opt, date) {
                 return moment(date).startOf(opt)
@@ -658,6 +810,24 @@
                 //     }
                 // })
 
+            },
+            showHidePanel(panel) {
+                panel.show = !panel.show
+                this.panel = panel
+
+                this.pickerOptions.forEach( (option) => {
+                    if (option.title !== panel.title) {
+                        option.visible = panel.show ? false : true
+                    }
+                })
+            },
+            onAction(fnName) {
+                let fn = this[fnName]
+                if (fn) fn();
+            },
+            buildSelectionList(fnName) {
+                let fn = this[fnName]
+                if ( fn ) return fn()
             }
         },
         watch: {
@@ -717,8 +887,14 @@
     };
 </script>
 
-<style lang="styl">
- .v-btn 
+<style>
+html {
+  overflow-y: auto;
+}  
+</style>
+
+<style lang="styl">   
+.v-btn 
   &&--range
     border-radius: unset
     &:before
