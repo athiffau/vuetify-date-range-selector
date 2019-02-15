@@ -30,6 +30,7 @@
                         absolute
                         temporary
                     >
+                        <v-layout column fill-height>
                         <v-toolbar
                           color="primary"
                           dark
@@ -53,7 +54,7 @@
                                 </v-list-tile>
                             </v-list>
                         </v-toolbar>
-                        <v-layout column>
+                            <v-flex xs12 sm6 md4>
                             <v-list class="pa-1" >
                                 <v-list-group
                                     v-for="(option,index) in pickerOptions" 
@@ -69,21 +70,70 @@
                                     <v-list-tile-content>
                                         <v-layout align-center justify-start column fill-height>
                                             <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="weekOption">
-                                                <v-layout row fill-height v-for="(item,index) in option.options" :key="index" class="mx-3"> 
+                                                <v-layout row fill-height v-for="(compo,index) in option.options" :key="index" class="mx-3 py-1"> 
                                                     <component 
-                                                        :is="item.type" 
+                                                        block
+                                                        :clearable="multiRange || compo.multiple"
+                                                        :deletable-chips=true
+                                                        :dense=true
                                                         flat 
-                                                        block 
-                                                        @click="onAction(item.action)" 
-                                                        :value="item.title" 
-                                                        style="width: 100%;"
                                                         :hide-details=true
-                                                        :hint="item.hint"
-                                                        :label="item.label"
+                                                        :hint="compo.hint" 
+                                                        :is="compo.type"
+                                                        :items="buildSelectionList(compo.items)"
+                                                        :item-text="getItemText"
+                                                        :item-value="getItemValue"
+                                                        :label="compo.label"
+                                                        :loading="compo.loading"
+                                                        :multiple=true
+                                                        :no-data-text="compo.label"
+                                                        
+                                                        style="width: 100%;"
                                                         :small-chips=true
-                                                        :items="buildSelectionList(item.items)"
+                                                        
+                                                        @click="onAction($event, compo.action, compo.needs || null)" 
+                                                        
+                                                        :value="compo.isOpen"
+                                                        v-bind:compo="compo"
+                                                        v-model="compo.value"
                                                     >
-                                                    {{ item.title }}
+                                                        <template
+                                                        slot="selection"
+                                                        slot-scope="{item, index}"
+                                                        >
+                                                            <template v-if="item.text.length > 5">
+                                                                <template v-if="compo.value.length === 1">
+                                                                    <v-chip v-if="index === 0" :small=true>
+                                                                        <span>{{ item.text }}</span>
+                                                                    </v-chip>
+                                                                </template>
+                                                                <template v-else>
+                                                                    <span v-if="index === 0"
+                                                                        class="grey--text"
+                                                                    >
+                                                                        {{compo.value.length}} selected
+                                                                    </span>
+                                                                </template>
+                                                            </template>
+                                                            <template v-else>                                                        
+                                                                <template v-if="compo.value.length <= 3">
+                                                                    <v-chip :small=true>
+                                                                        <span>{{ item.text }}</span>
+                                                                    </v-chip>
+                                                                </template>
+                                                                <template v-else>    
+                                                                    <v-chip v-if="index <= 1" :small=true>
+                                                                        <span>{{ item.text }}</span>
+                                                                    </v-chip>
+                                                                    <span v-if="index === 2"
+                                                                        class="grey--text caption"
+                                                                    >(+{{ compo.value.length - 2}} others)</span>
+                                                                </template>
+                                                            </template>
+                                                        </template>
+                                                        <template slot="default">
+                                                            {{ compo.title }}
+                                                        </template> 
                                                     </component>
                                                 </v-layout>
                                             </v-btn-toggle>
@@ -100,6 +150,7 @@
                                     <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
                                 </v-layout>
                             </v-list> -->
+                            </v-flex>
                         </v-layout>
                     </v-navigation-drawer>
                     <v-layout row wrap>
@@ -150,10 +201,9 @@
                             </v-btn>
                         </div>
                         <v-divider vertical></v-divider>
-                        <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">
-                            
+                        <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">                           
                             <v-item-group value="false">
-                                <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3">
+                                <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3 pt-1">
                                     <v-item v-for="(option,index) in pickerOptions"
                                         :key="index"
                                     >
@@ -166,24 +216,71 @@
                                             </v-btn>
 
                                             <v-btn-toggle v-model="weekOption" v-if="option.show" class="mx-2">
-                                                <component v-for="(item,index) in option.options"
-                                                    :key="index"
-                                                    :is="item.type"
-                                                    @click="onAction(item.action)"
-                                                    :flat=true
-                                                    :dense=true
-                                                    :value="item.title"
+                                                <component v-for="(compo,index) in option.options"
                                                     class="ma-0 mx-1 pa-0 px-1"
+                                                    :clearable="multiRange || compo.multiple"
+                                                    :deletable-chips=true
+                                                    :dense=true
+                                                    :flat=true
                                                     :hide-details=true
-                                                    :hint="item.hint"
-                                                    :label="item.label"
+                                                    
+                                                    :is="compo.type"
+                                                    :items="buildSelectionList(compo.items)"
+                                                    :item-text="getItemText"
+                                                    :item-value="getItemValue"
+                                                    :key="index"
+                                                    :label="compo.label"
+                                                    :loading="compo.loading"
+                                                    :multiple="compo.multiple"
+                                                    :no-date-text="compo.label"
+                                                    :ref="compo.ref"
+                                                    :single-line=true
                                                     :small-chips=true
-                                                    :items="buildSelectionList(item.items)"
-                                                    :item-text="text"
-                                                    :item-value="value"
                                                     style="max-width:220px;"
+                                                    @click="onAction(compo.action, compo.needs || null)"
+                                                    @change="onAction($event, compo.action, compo.needs || null)"
+                                                    :value="compo.isOpen"
+                                                    v-bind:compo="compo"
+                                                    v-model="compo.value"
                                                 >
-                                                {{ item.title }}   
+                                                    <template
+                                                      slot="selection"
+                                                      slot-scope="{item, index}"
+                                                      v-bind:compo="compo"
+                                                    >
+                                                        <template v-if="item.text.length > 5">
+                                                            <template v-if="compo.value.length === 1">
+                                                                <v-chip v-if="index === 0" :small=true>
+                                                                    <span>{{ item.text }}</span>
+                                                                </v-chip>
+                                                            </template>
+                                                            <template v-else>
+                                                                <span v-if="index === 0"
+                                                                    class="grey--text"
+                                                                >
+                                                                    {{compo.value.length}} selected
+                                                                </span>
+                                                            </template>
+                                                        </template>
+                                                        <template v-else>                                                        
+                                                            <template v-if="compo.value.length <= 3">
+                                                                <v-chip :small=true>
+                                                                    <span>{{ item.text }}</span>
+                                                                </v-chip>
+                                                            </template>
+                                                            <template v-else>    
+                                                                <v-chip v-if="index <= 1" :small=true>
+                                                                    <span>{{ item.text }}</span>
+                                                                </v-chip>
+                                                                <span v-if="index === 2"
+                                                                    class="grey--text caption"
+                                                                >(+{{ compo.value.length - 2}} others)</span>
+                                                            </template>
+                                                        </template>
+                                                    </template>
+                                                    <template slot="default">
+                                                        {{ compo.title }}
+                                                    </template>   
                                                 </component> 
                                             </v-btn-toggle>
                                         </div>
@@ -305,9 +402,15 @@
                                 vert: '',
                                 horz: ''
                             },
+                            multiple: true,
                             items: 'weekNumbers',
                             icon: '',
-                            action: 'onClickWeekSelect'
+                            isOpen: undefined,
+                            loading: false,
+                            action: 'onClickCalWeekSelect',
+                            ref: 'calWeekSelection',
+                            needs: 'calWeekSelection',
+                            value: []
                         },
                         {
                             title: 'Months by name',
@@ -317,9 +420,14 @@
                                 vert: '',
                                 horz: ''
                             },
+                            multiple: true,
                             items: 'monthNames',
                             icon: '',
-                            action: 'onClickMonthSelect'
+                            isOpen: undefined,
+                            loading: false,
+                            action: 'onClickCalMonthSelect',
+                            ref: 'calMonthSelection',
+                            value: []
                         },
                         {
                             title: 'Years',
@@ -329,9 +437,14 @@
                                 vert: '',
                                 horz: ''
                             },
-                            items: 'yearList',
+                            multiple: true,
+                            items: 'yearNumbers',
                             icon: '',
-                            action: 'onClickYearSelect'
+                            isOpen: undefined,
+                            loading: false,
+                            action: 'onClickCalYearSelect',
+                            ref: 'calYearlSelection',
+                            value: []
                         }
                     ] 
                 },
@@ -343,41 +456,56 @@
                     options: [
                         {
                             title: 'Year',
+                            label: 'Select year',
                             type: 'v-select',
                             attributes: {
                                 vert: '',
                                 horz: ''
                             },
-                            items: 'yearList',
+                            multiple: false,
+                            items: 'yearNumbers',
                             icon: '',
-                            action: null,
-                            ref: 'yearChoice'
+                            isOpen: undefined,
+                            loading: false,
+                            action: 'onFinanceYearSelected',
+                            ref: 'financeYearChoice',
+                            value: []
                         },
                         {
                             title: 'Quarter',
+                            label: 'Select quarter(s)',
                             type: 'v-combobox',
                             attributes: {
                                 vert: '',
                                 horz: ''
                             },
+                            multiple: true,
                             items: 'quarterList',
                             icon: '',
-                            action: 'onClickQuarterSelect',
-                            ref: 'quarterChoice',
-                            needs: 'yearChoice'
+                            isOpen: undefined,
+                            loading: false,
+                            action: 'onFinanceQuarterSelected',
+                            ref: 'financeQuarterChoice',
+                            needs: 'financeYearChoice',
+                            value: []
                         },
                         {
                             title: 'Periods',
+                            label: 'Select period(s)',
                             type: 'v-combobox',
                             attributes: {
                                 vert: '',
                                 horz: ''
                             },
+                            multiple: true,
                             items: 'periodList',
                             icon: '',
+                            isOpen: undefined,
+                            loading: false,
                             action: 'onClickPeriodSelect',
-                            ref: 'periodChoice',
-                            needs: 'yearChoice'
+                            ref: 'financePeriodChoice',
+                            needs: 'financeYearChoice',
+                            value: []
                         }
                     ]                   
                 }
@@ -415,6 +543,10 @@
                 type: Number,
                 default: 2
             },
+            multiRange: {
+                type: Boolean,
+                default: false
+            },
             solo: {
                 type: Boolean,
                 default: false
@@ -440,19 +572,25 @@
             }
         },
         methods: {
-            clearSelection() {
+            clearSelection () {
                 this.dateRange = []
                 this.weekOption = null
             },
-            hideOptionsDrawer() {
+            hideOptionsDrawer () {
                 this.pickerOptionsShow = false
             },
-            onClickClear() {
+            onClickClear () {
                 this.clearSelection()
                 this.emitResults()
                 this.isAnyPickerVisible()
             },
-            onClickYesterday() {
+            updateDateRange (dates) {
+                this.clearSelection()   //should it be onClickClear() ?
+                this.dateRange.push(...dates)
+                this.emitResults()
+                this.hideOptionsDrawer()
+            },
+            onClickYesterday () {
                 this.clearSelection()
                 let _d = new Date()
                 _d.setDate(_d.getDate()-1)
@@ -460,7 +598,7 @@
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickLastWeek() {
+            onClickLastWeek () {
                 this.clearSelection()
                 let _d = new Date()
                 this.dateRange.push(this.dateToISOStr(this.dateStartPrevWeek( _d)) )
@@ -468,16 +606,17 @@
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickThisWeek() {
+            onClickThisWeek () {
                 this.clearSelection()
-                let _start = this.dateToISOStr( this.dateStartOfWeek())
+                let _d = new Date()
+                let _start = this.dateToISOStr( this.dateStartOfWeek( _d ) )
                 this.dateRange.push( _start )
-                let _end = this.dateToISOStr( this.dateEndOfWeek())
+                let _end = this.dateToISOStr( this.dateEndOfWeek( _d ) )
                 this.dateRange.push( _end )
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickNextMonth() {
+            onClickNextMonth () {
                 this.clearSelection()
                 let _start = this.dateToISOStr( this.dateStartOfMonth().add(1, 'months') )
                 let _end = this.dateToISOStr( this.dateEndOfMonth( _start ) )
@@ -486,7 +625,7 @@
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickLastMonth() {
+            onClickLastMonth () {
                 this.clearSelection()
                 let _start = this.dateToISOStr( this.dateStartOfMonth().subtract(1, 'months'))
                 let _end = this.dateToISOStr( this.dateEndOfMonth( _start) )
@@ -495,75 +634,181 @@
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickThisMonth() {
+            onClickThisMonth () {
                 this.clearSelection()
                 this.dateRange.push( this.dateToISOStr(this.dateStartOfMonth() ))
                 this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth() ))
                 this.emitResults()  
                 this.hideOptionsDrawer()
             },
-            onClickNext3Months() {
+            onClickNext3Months () {
                 this.clearSelection()
                 let _d = this.dateStartOfMonth().add(1, 'months')
                 this.dateRange.push( this.dateToISOStr( _d ))
                 _d.add(2, 'months')
                 this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
+                this.emitResults()
+                this.hideOptionsDrawer()
+            },
+            onClickCalWeekSelect ( event, data ) {
+                console.log(event, data)
+                let _data = []
+                event.map( (val, index) => { 
+                    console.log(val)
+                    _data.push(...this.momentGetWeekDates( null, val )) 
+                })
+                this.updateDateRange(_data)
+            },
+            onClickCalMonthSelect () {
+
+            },
+            onClickCalYearSelect () {
+
+            },
+            onFinanceQuarterSelected () {
+                let _dates = []
+                let _ds = this.dateStartOfQuarter();
+                let _de = this.dateEndOfQuarter();
+                _dates.push(_ds)
+                _dates.push(_de)
+                this.updateDateRange( _dates )
+            },
+            /** Callbacks */
+            getItemText (item) {
+                return item.text
+            },
+            getItemValue (item) {
+                return item.value
             },
             /** Builder functions */
-            weekNumbers() {
+            weekNumbers (date) {
                 let result = []
-                let data = this.momentWeekNumbers()
+                let data = this.momentWeekNumbers(date)
                 for(let x=1;x<data.length;x++) {
                     result.push({ text: `Week #${x} [${data[x].start.format('MMM Do')} - ${data[x].end.format('MMM Do')}]`, value: x})
                 }
                 return result
             },
+            monthNames () {
+                return this.momentMonthShortNames().map( (val, index) => { return {text: val, value: index}} )
+            },
+            yearNumbers (date) {
+                return this.momentYearNumbers(date).map( (val, index) => { return {text: val, value: val}} )
+            },
+            quarterList () {
+                return [
+                    {text: 'Q1', value: 1},
+                    {text: 'Q2', value: 2},
+                    {text: 'Q3', value: 3},
+                    {text: 'Q4', value: 4},
+                    {text: 'Current', value: 0},
+                    {text: 'Last', value: -1}
+                ]
+            },
+            /**  Utils */
+            enforceDateArg (date) {
+                let _d = null
+                
+                if (date && typeof date === 'string') {
+                    _d = this.dateFromStr(date)
+                } else if (date && typeof date.toISOString === 'function') {
+                    _d = date
+                } else {
+                    _d = new Date()
+                }
+
+                return _d && typeof _d.toISOString === 'function' ? _d : null
+            },
             /** Date Functions -> move to mixin */
-            momentWeekNumbers(date) {
-                let d = date ? date.year() : moment().year()
+            momentYearNumbers (date) {
+                let result = []
+                const currentYear = date ? date : this.dateConfig.pickerView1
+                let _date = this.enforceDateArg(currentYear)
+                const maxYear = this.max ? parseInt(this.max, 10) : _date ? _date.getFullYear() + 10 : moment().year() + 10
+                const minYear = this.min ? parseInt(this.min, 10) : _date ? _date.getFullYear() - 10 : moment().year() - 10
+                for (let year = maxYear; year >= minYear; year--) {
+                    result.push(year)
+                }
+                return result.sort()
+            },
+            momentWeekNumbers (date) {                
+                let _d = this.enforceDateArg(date)
+                let _dy = _d ? _d.getFullYear() : moment().year()
+
                 let data = []
-                let weeks = moment().weeksInYear([d])
-                data[0] = {year: d}
+                let weeks = moment().weeksInYear([_dy])
+                data[0] = {year: _dy}
                 for (let x=1; x<=weeks; x++) {
-                    let wStart = moment([d]).week(x).startOf('week')
-                    let wEnd = moment([d]).week(x).endOf('week')
+                    let wStart = moment([_dy]).week(x).startOf('week')
+                    let wEnd = moment([_dy]).week(x).endOf('week').subtract(1, 'days')
                     data[x] = {start: wStart, end: wEnd}
                 }
                 return data
             },
-            momentStartOf(opt, date) {
-                return moment(date).startOf(opt)
+            momentMonthShortNames () {
+                return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMM')})
             },
-            momentEndOf(opt, date) {
-                return moment(date).endOf(opt)
+            momentMonthLongNames () {
+                return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMMM')})
             },
-            dateStartPrevWeek(date) {
-                let _d = this.dateStartOfWeek(this.dateToISOStr(date))
-                _d.subtract(7, 'days')
-                return _d
+            momentStartOf (opt, date) {
+                let _d = this.enforceDateArg(date)  //returns null of validate date
+                let _date = _d ? _d : moment()
+                return moment(_date).startOf(opt)
             },
-            dateEndPrevWeek(date) {
+            momentEndOf (opt, date) {
+                let _d = this.enforceDateArg(date)  //returns null or validate date
+                let _date = _d ? _d : moment()               
+                return moment(_date).endOf(opt)
+            },
+            dateStartPrevWeek (date) {
+                let _d = this.enforceDateArg(date)
+                let _date = _d ? _d : moment()
+                let _dw = this.dateStartOfWeek(this.dateToISOStr(_date))
+                _dw.subtract(7, 'days')
+                return _dw
+            },
+            dateEndPrevWeek (date) {
                 let _d = this.dateEndOfWeek(this.dateToISOStr(date))
                 _d.subtract(7, 'days')
                 return _d
             },
-            dateStartOfWeek(date) {
+            dateStartOfWeek (date) {
                 let _t = this.momentStartOf('week', date)
                 return _t
             },
-            dateEndOfWeek(date) {
+            dateEndOfWeek (date) {
                 let _t = this.momentEndOf('week', date).subtract(1, 'days')
                 return _t
             },
-            dateStartOfMonth(date) {
+            dateStartOfMonth (date) {
                 let _t = this.momentStartOf('month', date)
                 return _t
             },
-            dateEndOfMonth(date) {
-                let _t = this.momentEndOf('month', date).subtract(1,'days')
+            dateEndOfMonth (date) {
+                let _d = this.enforceDateArg(date)
+                let _t = this.momentEndOf('month', _d.toISOString()).subtract(1,'days')
                 return _t
             },
-            dateFromStr(strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
+            momentGetWeekDates (date, weekNumber) {
+                //let _d = this.enforceDateArg(date)
+                let _wn = parseInt(weekNumber) || 1
+                //let _year = _d.year ? _d.year() : _d.getFullYear ? _d.getFullYear() : null
+                //let _weekStr = _year ? `${_year}-${_wn}-` : `${_wn}-`
+                //let _days = [1,7].map((d) => { moment( `${_weekStr}-${d}` , 'YYYY-w-e') },_weekStr)
+
+                let _data = this.momentWeekNumbers(date)
+                //console.log(_data)
+                //console.log(_data[_wn])
+
+                //console.log(_d, _wn, _year, _weekStr, _days)
+                console.log( _data, _data[_wn].start.toISOString().substr(0,10), _data[_wn].end.toISOString().substr(0,10) )
+                //return [_data[_wn].start, _data[_wn].end]
+                return  [_data[_wn].start.toISOString().substr(0,10), _data[_wn].end.toISOString().substr(0,10) ]             
+            },
+
+            // END OF MOEMNT
+            dateFromStr (strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
                 if (typeof strDate === 'string') {
                     let yr  = parseInt(strDate.substring(0,4))
                     let mon = parseInt(strDate.substring(5,8))
@@ -578,7 +823,7 @@
 
                 return null
             },
-            dateToStr(date) {
+            dateToStr (date) {
                 if (date && typeof date.toISOString === 'function') {
                     return this.formatters.titleDate(date.toISOString().substr(0,10))
                 } else if (date && typeof date === 'string') {
@@ -587,7 +832,7 @@
                 
                 return null
             },
-            dateToISOStr(date, len = 10) {
+            dateToISOStr (date, len = 10) {
                 if (date && typeof date.toISOString === 'function') {
                     return date.toISOString().substr(0,len)
                 } else if (date && typeof date === 'string') {
@@ -821,13 +1066,31 @@
                     }
                 })
             },
-            onAction(fnName) {
-                let fn = this[fnName]
-                if (fn) fn();
+            onAction( ...attributes ) { 
+
+                if (attributes.length === 2) {
+                    var [fnName, callbackAttributes] = attributes
+                    let _fn = this[fnName]
+                    let _date = null
+                    if (_fn) _fn(_date);
+                } else if (attributes.length === 3) {
+                    var [event, fnName, callbackAttributes] = attributes
+                    let _fn = this[fnName]
+                    if (_fn) _fn(event, callbackAttributes) 
+                }
+            
+
+                //get the date of the first picker
+                // if (startFromNow) {
+                //     let _strDate = this.dateConfig.pickerView1
+                //     let _d = this.enforceDateArg(_strDate)
+                //     _date = _d ? _d : moment()
+                // }
+                
             },
             buildSelectionList(fnName) {
-                let fn = this[fnName]
-                if ( fn ) return fn()
+                let _fn = this[fnName]
+                if ( _fn ) return _fn()
             }
         },
         watch: {
