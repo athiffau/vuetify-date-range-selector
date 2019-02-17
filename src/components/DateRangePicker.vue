@@ -1,98 +1,245 @@
 <template>
-    <v-layout row wrap>
-        <v-flex xs12 sm6 md4>
-            <v-menu
-            ref="menu"
-            :close-on-content-click="false"
-            v-model="isOpen"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            full-width
-            min-width="290px"
-            :dark="dark"
-            >
-                <v-text-field
-                    slot="activator"
-                    v-model="dateRangeText"
-                    :label="label"
-                    :prepend-icon="icon"
-                    readonly 
-                    :dark="dark"
-                    :solo="solo"
-             
-                ></v-text-field>
-                <v-card
-                    :dark="dark"
+
+        <v-layout row wrap>
+            <v-flex xs10 sm6 md4>
+                <v-menu
+                ref="menu"
+                :close-on-content-click="false"
+                v-model="isOpen"
+                :nudge-right="$vuetify.breakpoint.xsOnly ? 15 : $vuetify.breakpoint.mdAndUp ? 40 : 20"
+                transition="scale-transition"
+                offset-y
+                full-width
+                min-width="290px"
+                :dark="dark"
                 >
-                    <v-navigation-drawer
-                        v-model="pickerOptionsShow"
-                        absolute
-                        temporary
+                    <v-text-field
+                        slot="activator"
+                        v-model="dateRangeText"
+                        :label="label"
+                        :prepend-icon="icon"
+                        readonly 
+                        :dark="dark"
+                        :solo="solo"
+                
+                    ></v-text-field>
+                    <v-card
+                        :dark="dark"
+                        :max-width="maxWidth"
                     >
-                        <v-layout column fill-height>
-                        <v-toolbar
-                          color="primary"
-                          dark
-                          flat
+                        <v-navigation-drawer
+                            v-model="pickerOptionsShow"
+                            absolute
+                            temporary
                         >
-                            <v-list class="pa-1">
-                                <v-list-tile avatar>
-                                    <v-list-tile-avatar>
-                                        <v-icon>event</v-icon>
-                                    </v-list-tile-avatar>
+                            <v-layout column fill-height>
+                            <v-toolbar
+                            color="primary"
+                            dark
+                            flat
+                            >
+                                <v-list class="pa-1">
+                                    <v-list-tile avatar>
+                                        <v-list-tile-avatar>
+                                            <v-icon>event</v-icon>
+                                        </v-list-tile-avatar>
 
-                                    <v-list-tile-content>
-                                        <v-list-tile-title>Picker Options</v-list-tile-title>
-                                    </v-list-tile-content>
+                                        <v-list-tile-content>
+                                            <v-list-tile-title>Picker Options</v-list-tile-title>
+                                        </v-list-tile-content>
 
-                                    <v-list-tile-action>
-                                        <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                            <v-icon >chevron_left</v-icon>
-                                        </v-btn> 
-                                    </v-list-tile-action>
-                                </v-list-tile>
-                            </v-list>
-                        </v-toolbar>
-                            <v-flex xs12 sm6 md4>
-                            <v-list class="pa-1" >
-                                <v-list-group
-                                    v-for="(option,index) in pickerOptions" 
-                                    :key="index"
-                                    v-model="option.active"
-                                    :prepend-icon="option.icon"
-                                    no-action
-                                >
-                                    <v-list-tile slot="activator">
-                                        <v-list-tile-title>{{ option.title }}</v-list-tile-title>
+                                        <v-list-tile-action>
+                                            <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
+                                                <v-icon >chevron_left</v-icon>
+                                            </v-btn> 
+                                        </v-list-tile-action>
                                     </v-list-tile>
+                                </v-list>
+                            </v-toolbar>
+                                <v-flex xs12 sm6 md4>
+                                    <v-list class="pa-1" >
+                                        <v-list-group
+                                            v-for="(option,index) in pickerOptions" 
+                                            :key="index"
+                                            v-model="option.active"
+                                            :prepend-icon="option.icon"
+                                            no-action
+                                        >
+                                            <v-list-tile slot="activator">
+                                                <v-list-tile-title>{{ option.title }}</v-list-tile-title>
+                                            </v-list-tile>
 
-                                    <v-list-tile-content>
-                                        <v-layout align-center justify-start column fill-height>
-                                            <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="weekOption">
-                                                <v-layout row fill-height v-for="(compo,index) in option.options" :key="index" class="mx-3 py-1"> 
-                                                    <component 
-                                                        block
+                                            <v-list-tile-content>
+                                                <v-layout align-center justify-start column fill-height>
+                                                    <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="weekOption">
+                                                        <v-layout row fill-height v-for="(compo,index) in option.options" :key="index" class="mx-3 py-1"> 
+                                                            <component 
+                                                                block
+                                                                :clearable="multiRange || compo.multiple"
+                                                                :deletable-chips=true
+                                                                :dense=true
+                                                                flat 
+                                                                :hide-details=true
+                                                                :hint="compo.hint" 
+                                                                :is="compo.type"
+                                                                :items="buildSelectionList(compo.items)"
+                                                                :item-text="getItemText"
+                                                                :item-value="getItemValue"
+                                                                :label="compo.label"
+                                                                :loading="compo.loading"
+                                                                :multiple=true
+                                                                :no-data-text="compo.label"
+                                                                :prepend-icon="compo.icon"
+                                                                style="width: 100%;"
+                                                                :single-line=true
+                                                                :small-chips=true
+                                                                
+                                                                @change="onAction(
+                                                                            $event, 
+                                                                            compo.action, 
+                                                                            typeof compo.value === 'boolean' ? !compo.value : compo.value, 
+                                                                            getSiblingData(option, compo.needs) || null)"
+                                                                :value="compo.isOpen"
+                                                                v-bind:compo="compo"
+                                                                v-model="compo.value"
+                                                            >
+                                                                <template
+                                                                slot="selection"
+                                                                slot-scope="{item, index}"
+                                                                >
+                                                                    <template v-if="item.text.length > 5">
+                                                                        <template v-if="compo.value.length === 1">
+                                                                            <v-chip v-if="index === 0" :small=true>
+                                                                                <span>{{ item.text }}</span>
+                                                                            </v-chip>
+                                                                        </template>
+                                                                        <template v-else>
+                                                                            <span v-if="index === 0"
+                                                                                class="grey--text"
+                                                                            >
+                                                                                {{compo.value.length}} selected
+                                                                            </span>
+                                                                        </template>
+                                                                    </template>
+                                                                    <template v-else>                                                        
+                                                                        <template v-if="compo.value.length <= 3">
+                                                                            <v-chip :small=true>
+                                                                                <span>{{ item.text }}</span>
+                                                                            </v-chip>
+                                                                        </template>
+                                                                        <template v-else>    
+                                                                            <v-chip v-if="index <= 1" :small=true>
+                                                                                <span>{{ item.text }}</span>
+                                                                            </v-chip>
+                                                                            <span v-if="index === 2"
+                                                                                class="grey--text caption"
+                                                                            >(+{{ compo.value.length - 2}} others)</span>
+                                                                        </template>
+                                                                    </template>
+                                                                </template>
+                                                                <template slot="default">
+                                                                    {{ compo.title }}
+                                                                </template> 
+                                                            </component>
+                                                        </v-layout>
+                                                    </v-btn-toggle>
+                                                </v-layout>
+                                            </v-list-tile-content>
+
+                                        </v-list-group>
+                                    </v-list>
+                                </v-flex>
+                            </v-layout>
+                        </v-navigation-drawer>
+                        <v-layout row wrap>
+                        <template v-for="index in dateConfig.visiblePickers">  
+                            <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
+                                :allow-date-change="index === 1"
+                                :allowed-dates="allowedDates"
+                                :color="getPickerColor(index)"
+                                :dark="dark"
+                                :day-format="dayFormat"
+                                :event-color="eventColor"
+                                :events="date => eventsEx(date, index)"
+                                :first-day-of-week="firstDayOfWeek"
+                                :header-color="headerColor"
+                                :header-date-format="headerDateFormat"
+                                :hover-link="dateConfig.hoverLink"
+                                :key="index"
+                                :light="light"
+                                :locale="locale"
+                                :min="dateConfig[`pickerMin${index}`]"
+                                :max="dateConfig[`pickerMax${index}`]"
+                                :multiple=true
+                                :next-icon="nextIcon"
+                                :no-title="noTitle" 
+                                :picker-date="dateConfig[`pickerView${index}`]"
+                                :prev-icon="prevIcon"
+                                :range="range"
+                                :reactive="reactive"
+                                :scrollable="scrollable"
+                                :show-current="showCurrent"
+                                :show-week="showWeek"
+                                :title-date-format="date => getPickerTitle(date, index)"
+                                :type="type"
+                                :year-format="yearFormat"
+                                :year-icon="yearIcon"
+                                v-on:hoverLink="setHoverLink"
+                                v-on:input="dates => onInputChange(dates, index)" 
+                                v-on:click:date="date => onDateClicked(date, index)" 
+                                v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
+                            >
+                            </v-date-picker>
+                        </template>  
+                        </v-layout>
+                        <v-card-actions>
+                            <div class="text-xs-center mx-2">
+                                <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
+                                    <v-icon >more_vert</v-icon>
+                                </v-btn>
+                            </div>
+                            <v-divider vertical></v-divider>
+                            <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">                           
+                                <v-item-group value="false" class="hidden-lg-and-down" v-if="this.maxWidth === null">
+                                    <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3 pt-1">
+                                        <v-item v-for="(option,index) in pickerOptions"
+                                            :key="index"
+                                        >
+                                            <div v-if="option.visible" slot-scoped="{ active }">
+                                                {{option.title}}
+                                                <v-btn flat fab small @click="showHidePanel(option)" slot="activator" class="mr-2">
+                                                
+                                                    <v-icon>{{option.show ? 'unfold_less' : 'unfold_more'}}</v-icon>
+                                                
+                                                </v-btn>
+
+                                                <v-btn-toggle v-model="weekOption" v-if="option.show" class="mx-2">
+                                                    <component v-for="(compo,index) in option.options"
+                                                        class="ma-0 mx-1 pa-0 px-1"
                                                         :clearable="multiRange || compo.multiple"
                                                         :deletable-chips=true
                                                         :dense=true
-                                                        flat 
-                                                        :hide-details=true
-                                                        :hint="compo.hint" 
+                                                        :flat=true
+                                                        :hide-details=true                                                    
                                                         :is="compo.type"
                                                         :items="buildSelectionList(compo.items)"
                                                         :item-text="getItemText"
                                                         :item-value="getItemValue"
+                                                        :key="index"
                                                         :label="compo.label"
                                                         :loading="compo.loading"
-                                                        :multiple=true
+                                                        :multiple="compo.multiple"
                                                         :no-data-text="compo.label"
-                                                        
-                                                        style="width: 100%;"
+                                                        :prepend-icon="compo.icon"
+                                                        :ref="compo.ref"
+                                                        :single-line=true
                                                         :small-chips=true
-                                                        
-                                                        @click="onAction($event, compo.action, compo.needs || null)" 
-                                                        
+                                                        style="max-width:220px;"
+                                                        @change="onAction(
+                                                            $event, 
+                                                            compo.action, 
+                                                            typeof compo.value === 'boolean' ? !compo.value : compo.value, 
+                                                            getSiblingData(option, compo.needs) || null)"
                                                         :value="compo.isOpen"
                                                         v-bind:compo="compo"
                                                         v-model="compo.value"
@@ -100,6 +247,7 @@
                                                         <template
                                                         slot="selection"
                                                         slot-scope="{item, index}"
+                                                        v-bind:compo="compo"
                                                         >
                                                             <template v-if="item.text.length > 5">
                                                                 <template v-if="compo.value.length === 1">
@@ -116,198 +264,54 @@
                                                                 </template>
                                                             </template>
                                                             <template v-else>                                                        
-                                                                <template v-if="compo.value.length <= 3">
+                                                                <!-- <template v-if="compo.value.length <= 2">
                                                                     <v-chip :small=true>
                                                                         <span>{{ item.text }}</span>
                                                                     </v-chip>
                                                                 </template>
-                                                                <template v-else>    
-                                                                    <v-chip v-if="index <= 1" :small=true>
+                                                                <template v-else>     -->
+                                                                    <v-chip v-if="index === 0" :small=true>
                                                                         <span>{{ item.text }}</span>
                                                                     </v-chip>
-                                                                    <span v-if="index === 2"
+                                                                    <span v-if="index === 1"
                                                                         class="grey--text caption"
-                                                                    >(+{{ compo.value.length - 2}} others)</span>
-                                                                </template>
+                                                                    >(+{{ compo.value.length - 1}} others)</span>
+                                                                <!-- </template> -->
                                                             </template>
                                                         </template>
                                                         <template slot="default">
                                                             {{ compo.title }}
-                                                        </template> 
-                                                    </component>
-                                                </v-layout>
-                                            </v-btn-toggle>
-                                        </v-layout>
-                                    </v-list-tile-content>
-
-                                </v-list-group>
-                            </v-list>
+                                                        </template>   
+                                                    </component> 
+                                                </v-btn-toggle>
+                                            </div>
+                                            <div v-else slot-scoped="{action}"></div>
+                                    
+                                        </v-item>
+                                    </v-layout>
+                                </v-item-group>
+                            </template>                        
                             <v-spacer></v-spacer>
-                            <!-- <v-list>
-                                <v-divider></v-divider>
-                                <v-layout row align-center justify-right>
-                                    <v-spacer></v-spacer>
-                                    <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
-                                </v-layout>
-                            </v-list> -->
-                            </v-flex>
-                        </v-layout>
-                    </v-navigation-drawer>
-                    <v-layout row wrap>
-                      <template v-for="index in dateConfig.visiblePickers">  
-                        <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
-                            :allow-date-change="index === 1"
-                            :allowed-dates="allowedDates"
-                            :color="getPickerColor(index)"
-                            :dark="dark"
-                            :day-format="dayFormat"
-                            :event-color="eventColor"
-                            :events="date => eventsEx(date, index)"
-                            :first-day-of-week="firstDayOfWeek"
-                            :header-color="headerColor"
-                            :header-date-format="headerDateFormat"
-                            :hover-link="dateConfig.hoverLink"
-                            :key="index"
-                            :light="light"
-                            :locale="locale"
-                            :min="dateConfig[`pickerMin${index}`]"
-                            :max="dateConfig[`pickerMax${index}`]"
-                            :multiple=true
-                            :next-icon="nextIcon"
-                            :no-title="noTitle" 
-                            :picker-date="dateConfig[`pickerView${index}`]"
-                            :prev-icon="prevIcon"
-                            :range="range"
-                            :reactive="reactive"
-                            :scrollable="scrollable"
-                            :show-current="showCurrent"
-                            :show-week="showWeek"
-                            :title-date-format="date => getPickerTitle(date, index)"
-                            :type="type"
-                            :year-format="yearFormat"
-                            :year-icon="yearIcon"
-                            v-on:hoverLink="setHoverLink"
-                            v-on:input="dates => onInputChange(dates, index)" 
-                            v-on:click:date="date => onDateClicked(date, index)" 
-                            v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
-                        >
-                        </v-date-picker>
-                      </template>  
-                    </v-layout>
-                    <v-card-actions>
-                        <div class="text-xs-center mx-2">
-                            <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                <v-icon >more_vert</v-icon>
-                            </v-btn>
-                        </div>
-                        <v-divider vertical></v-divider>
-                        <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">                           
-                            <v-item-group value="false">
-                                <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3 pt-1">
-                                    <v-item v-for="(option,index) in pickerOptions"
-                                        :key="index"
-                                    >
-                                        <div v-if="option.visible" slot-scoped="{ active }">
-                                            {{option.title}}
-                                            <v-btn flat fab small @click="showHidePanel(option)" slot="activator" class="mr-2">
-                                               
-                                                <v-icon>{{option.show ? 'unfold_less' : 'unfold_more'}}</v-icon>
-                                            
-                                            </v-btn>
+                            <v-divider vertical class="hidden-lg-and-down"></v-divider>
+                            <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
+                            <v-btn @click="isOpen = false" class="mx-2" color="green">Apply</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-menu>
+            </v-flex>
+        </v-layout>
 
-                                            <v-btn-toggle v-model="weekOption" v-if="option.show" class="mx-2">
-                                                <component v-for="(compo,index) in option.options"
-                                                    class="ma-0 mx-1 pa-0 px-1"
-                                                    :clearable="multiRange || compo.multiple"
-                                                    :deletable-chips=true
-                                                    :dense=true
-                                                    :flat=true
-                                                    :hide-details=true
-                                                    
-                                                    :is="compo.type"
-                                                    :items="buildSelectionList(compo.items)"
-                                                    :item-text="getItemText"
-                                                    :item-value="getItemValue"
-                                                    :key="index"
-                                                    :label="compo.label"
-                                                    :loading="compo.loading"
-                                                    :multiple="compo.multiple"
-                                                    :no-date-text="compo.label"
-                                                    :ref="compo.ref"
-                                                    :single-line=true
-                                                    :small-chips=true
-                                                    style="max-width:220px;"
-                                                    @click="onAction(compo.action, compo.needs || null)"
-                                                    @change="onAction($event, compo.action, compo.needs || null)"
-                                                    :value="compo.isOpen"
-                                                    v-bind:compo="compo"
-                                                    v-model="compo.value"
-                                                >
-                                                    <template
-                                                      slot="selection"
-                                                      slot-scope="{item, index}"
-                                                      v-bind:compo="compo"
-                                                    >
-                                                        <template v-if="item.text.length > 5">
-                                                            <template v-if="compo.value.length === 1">
-                                                                <v-chip v-if="index === 0" :small=true>
-                                                                    <span>{{ item.text }}</span>
-                                                                </v-chip>
-                                                            </template>
-                                                            <template v-else>
-                                                                <span v-if="index === 0"
-                                                                    class="grey--text"
-                                                                >
-                                                                    {{compo.value.length}} selected
-                                                                </span>
-                                                            </template>
-                                                        </template>
-                                                        <template v-else>                                                        
-                                                            <template v-if="compo.value.length <= 3">
-                                                                <v-chip :small=true>
-                                                                    <span>{{ item.text }}</span>
-                                                                </v-chip>
-                                                            </template>
-                                                            <template v-else>    
-                                                                <v-chip v-if="index <= 1" :small=true>
-                                                                    <span>{{ item.text }}</span>
-                                                                </v-chip>
-                                                                <span v-if="index === 2"
-                                                                    class="grey--text caption"
-                                                                >(+{{ compo.value.length - 2}} others)</span>
-                                                            </template>
-                                                        </template>
-                                                    </template>
-                                                    <template slot="default">
-                                                        {{ compo.title }}
-                                                    </template>   
-                                                </component> 
-                                            </v-btn-toggle>
-                                        </div>
-                                        <div v-else slot-scoped="{action}"></div>
-                                  
-                                    </v-item>
-                                </v-layout>
-                            </v-item-group>
-                        </template>                        
-                        <v-spacer></v-spacer>
-                        <v-divider vertical></v-divider>
-                        <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
-                        <v-btn @click="isOpen = false" class="mx-2" color="green">Apply</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-menu>
-        </v-flex>
-    </v-layout>
 </template>
 
 <script>
     import VDatePicker from 'vuetify/es5/components/VDatePicker/VDatePicker'   
     import moment from 'moment'
+    var myMoment = moment
     export default {
         name: 'v-date-range-picker',
         extends: VDatePicker,
         data: () => ({
+            currentAction: null,
             deltaOrigin: 0,
             dateRange: [],
             dateConfig: {
@@ -317,6 +321,7 @@
                 visiblePickers: 0
             },
             isOpen: false,
+            isLoaded: false,
             numPickersVisible: 0,
             pickerOptionsShow: false,
             pickerOptions: [ 
@@ -329,62 +334,44 @@
                         {
                             title: 'Yesterday',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action:'onClickYesterday'
+                            action:'onClickYesterday',
+                            value: false
                         },
                         {
                             title: 'Last Week',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action: 'onClickLastWeek'
+                            action: 'onClickLastWeek',
+                            value: false
                         },
                         {
                             title: 'This Week',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action: 'onClickThisWeek'
+                            action: 'onClickThisWeek',
+                            value: false
                         },
                         {
                             title: 'Last Month',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action: 'onClickLastMonth'
+                            action: 'onClickLastMonth',
+                            value: false
                         },
                         {
                             title: 'This Month',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action: 'onClickThisMonth'
+                            action: 'onClickThisMonth',
+                            value: false
                         },
                         {
                             title: 'Next 3 Months',
                             type: 'v-btn',
-                            attributes: {
-                                vert: 'flat',
-                                horz: 'flat block'
-                            },
                             icon: '',
-                            action: 'onClickNext3Months'
+                            action: 'onClickNext3Months',
+                            value: false
                         }
                     ] 
                 },
@@ -398,10 +385,6 @@
                             title: 'Week by number',
                             label: 'Week by number',
                             type: 'v-select',
-                            attributes: {
-                                vert: '',
-                                horz: ''
-                            },
                             multiple: true,
                             items: 'weekNumbers',
                             icon: '',
@@ -409,17 +392,12 @@
                             loading: false,
                             action: 'onClickCalWeekSelect',
                             ref: 'calWeekSelection',
-                            needs: 'calWeekSelection',
                             value: []
                         },
                         {
                             title: 'Months by name',
                             label: 'Month by name',
                             type: 'v-select',
-                            attributes: {
-                                vert: '',
-                                horz: ''
-                            },
                             multiple: true,
                             items: 'monthNames',
                             icon: '',
@@ -433,10 +411,6 @@
                             title: 'Years',
                             label: 'Year',
                             type: 'v-select',
-                            attributes: {
-                                vert: '',
-                                horz: ''
-                            },
                             multiple: true,
                             items: 'yearNumbers',
                             icon: '',
@@ -459,32 +433,27 @@
                             label: 'Select year',
                             type: 'v-select',
                             attributes: {
-                                vert: '',
-                                horz: ''
+                                outline: true
                             },
                             multiple: false,
                             items: 'yearNumbers',
-                            icon: '',
+                            icon: 'looks_one',
                             isOpen: undefined,
                             loading: false,
-                            action: 'onFinanceYearSelected',
+                            action: 'onClickFinanceYearSelected',
                             ref: 'financeYearChoice',
                             value: []
                         },
                         {
                             title: 'Quarter',
                             label: 'Select quarter(s)',
-                            type: 'v-combobox',
-                            attributes: {
-                                vert: '',
-                                horz: ''
-                            },
+                            type: 'v-select',
                             multiple: true,
                             items: 'quarterList',
-                            icon: '',
+                            icon: 'looks_two',
                             isOpen: undefined,
                             loading: false,
-                            action: 'onFinanceQuarterSelected',
+                            action: 'onClickFinanceQuarterSelected',
                             ref: 'financeQuarterChoice',
                             needs: 'financeYearChoice',
                             value: []
@@ -492,17 +461,13 @@
                         {
                             title: 'Periods',
                             label: 'Select period(s)',
-                            type: 'v-combobox',
-                            attributes: {
-                                vert: '',
-                                horz: ''
-                            },
+                            type: 'v-select',
                             multiple: true,
                             items: 'periodList',
-                            icon: '',
+                            icon: 'looks_two',
                             isOpen: undefined,
                             loading: false,
-                            action: 'onClickPeriodSelect',
+                            action: 'onClickFinancePeriodSelected',
                             ref: 'financePeriodChoice',
                             needs: 'financeYearChoice',
                             value: []
@@ -523,7 +488,15 @@
                 type: Boolean,
                 default: true
             },
+            autoFocusOnDateChange: {
+                type: Boolean,
+                default: true
+            },
             color: {
+                type: Array,
+                default: null
+            },
+            rangeColors: {
                 type: Array,
                 default: null
             },
@@ -538,6 +511,10 @@
             noTitle: {
                 type: Boolean,
                 default: false
+            },
+            maxWidth: {
+                type: Number,
+                default: null
             },
             numPickers: {
                 type: Number,
@@ -572,9 +549,35 @@
             }
         },
         methods: {
+            setCurrentAction ( actionName ) {
+                let _actions = []
+                _actions.push(actionName)
+                this.pickerOptions.forEach( (item, index) => {
+                    item.options.forEach( (val, index) => {
+                        if (val.action === actionName && val.needs !== undefined) {
+                            _actions.push(val.needs)
+                        }
+                    })
+                })
+
+                this.currentAction = _actions
+            },
+            clearCurrentAction() {
+                this.currentAction = null
+            },
             clearSelection () {
                 this.dateRange = []
                 this.weekOption = null
+                if (this.currentAction) {
+                    let _ca = this.currentAction
+                    this.pickerOptions.forEach( (item, index) => {
+                        item.options.forEach( (val, index) => {
+                            if (!_ca.includes(val.ref) && !_ca.includes(val.action) && val.value !== undefined) {
+                                val.value = []
+                            }
+                        }) 
+                    })
+                }
             },
             hideOptionsDrawer () {
                 this.pickerOptionsShow = false
@@ -585,95 +588,150 @@
                 this.isAnyPickerVisible()
             },
             updateDateRange (dates) {
+                if (!Array.isArray(dates)) return
                 this.clearSelection()   //should it be onClickClear() ?
-                this.dateRange.push(...dates)
+                this.dateRange.push(dates[0])
+                this.dateRange.push(dates[dates.length - 1])
+                this.emitResults()
+                this.isAnyPickerVisible()
+            },
+            /** Toggle button handlers */
+            onClickYesterday (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
+                this.clearSelection()
+                if (value === true) {
+                    let _d = new Date()
+                    _d.setDate(_d.getDate()-1)
+                    this.dateRange.push(this.dateToISOStr(_d))
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickYesterday () {
+            onClickLastWeek (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _d = new Date()
-                _d.setDate(_d.getDate()-1)
-                this.dateRange.push(this.dateToISOStr(_d))
+                if (value === true) {
+                    let _d = new Date()
+                    this.dateRange.push(this.dateToISOStr(this.dateStartPrevWeek( _d)) )
+                    this.dateRange.push(this.dateToISOStr(this.dateEndPrevWeek(_d)) )
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickLastWeek () {
+            onClickThisWeek (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _d = new Date()
-                this.dateRange.push(this.dateToISOStr(this.dateStartPrevWeek( _d)) )
-                this.dateRange.push(this.dateToISOStr(this.dateEndPrevWeek(_d)) )
+                if (value === true) {
+                    let _d = new Date()
+                    let _start = this.dateToISOStr( this.dateStartOfWeek( _d ) )
+                    this.dateRange.push( _start )
+                    let _end = this.dateToISOStr( this.dateEndOfWeek( _d ) )
+                    this.dateRange.push( _end )
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickThisWeek () {
+            onClickNextMonth (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _d = new Date()
-                let _start = this.dateToISOStr( this.dateStartOfWeek( _d ) )
-                this.dateRange.push( _start )
-                let _end = this.dateToISOStr( this.dateEndOfWeek( _d ) )
-                this.dateRange.push( _end )
+                if (value === true) {
+                    let _start = this.dateToISOStr( this.dateStartOfMonth().add(1, 'months') )
+                    let _end = this.dateToISOStr( this.dateEndOfMonth( _start ) )
+                    this.dateRange.push( _start )
+                    this.dateRange.push( _end )
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickNextMonth () {
+            onClickLastMonth (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _start = this.dateToISOStr( this.dateStartOfMonth().add(1, 'months') )
-                let _end = this.dateToISOStr( this.dateEndOfMonth( _start ) )
-                this.dateRange.push( _start )
-                this.dateRange.push( _end )
+                if (value === true) {
+                    let _start = this.dateToISOStr( this.dateStartOfMonth().subtract(1, 'months'))
+                    let _end = this.dateToISOStr( this.dateEndOfMonth( _start) )
+                    this.dateRange.push( _start )
+                    this.dateRange.push( _end )
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickLastMonth () {
+            onClickThisMonth (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _start = this.dateToISOStr( this.dateStartOfMonth().subtract(1, 'months'))
-                let _end = this.dateToISOStr( this.dateEndOfMonth( _start) )
-                this.dateRange.push( _start )
-                this.dateRange.push( _end )
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickThisMonth () {
-                this.clearSelection()
-                this.dateRange.push( this.dateToISOStr(this.dateStartOfMonth() ))
-                this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth() ))
+                if (value === true) {
+                    this.dateRange.push( this.dateToISOStr(this.dateStartOfMonth() ))
+                    this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth() ))
+                }
                 this.emitResults()  
                 this.hideOptionsDrawer()
             },
-            onClickNext3Months () {
+            onClickNext3Months (dateInView, event, value, params) {
+                /* don't use validateDate() which removes day from date */
                 this.clearSelection()
-                let _d = this.dateStartOfMonth().add(1, 'months')
-                this.dateRange.push( this.dateToISOStr( _d ))
-                _d.add(2, 'months')
-                this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
+                if (value === true) {
+                    let _d = this.dateStartOfMonth().add(1, 'months')
+                    this.dateRange.push( this.dateToISOStr( _d ))
+                    _d.add(2, 'months')
+                    this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
+                }
                 this.emitResults()
                 this.hideOptionsDrawer()
             },
-            onClickCalWeekSelect ( event, data ) {
-                console.log(event, data)
-                let _data = []
-                event.map( (val, index) => { 
-                    console.log(val)
-                    _data.push(...this.momentGetWeekDates( null, val )) 
-                })
-                this.updateDateRange(_data)
-            },
-            onClickCalMonthSelect () {
-
-            },
-            onClickCalYearSelect () {
-
-            },
-            onFinanceQuarterSelected () {
+            /** Select handlers */
+            //The following functions are not based on today's date
+            onClickCalWeekSelect ( dateInView, event, value, params ) {
                 let _dates = []
-                let _ds = this.dateStartOfQuarter();
-                let _de = this.dateEndOfQuarter();
-                _dates.push(_ds)
-                _dates.push(_de)
-                this.updateDateRange( _dates )
+                event.map( (val, index) => { 
+                    _dates.push(...this.momentGetWeekDates( null, val )) 
+                })
+                this.updateDateRange(_dates)
             },
-            /** Callbacks */
+            onClickCalMonthSelect ( dateInView, event, value, params ) {
+                let _dates = []
+                event.map( (val, index) => {
+                    _dates.push(...this.momentGetMonthDates( null, val ))
+                })
+                this.updateDateRange(_dates)
+            },
+            onClickCalYearSelect ( dateInView, event, value, params ) {            
+                let _dates = []
+                event.map( (val, index) => {
+                    let _dStart = this.dateToISOStr(moment({year: val, month: 0, date: 1}))
+                    let _dEnd = this.dateToISOStr(moment({year: val, month: 11, date: 31}))
+                    _dates.push(_dStart)
+                    _dates.push(_dEnd)
+                })
+                this.updateDateRange(_dates.sort())
+            },
+            //** Combo handlers */
+            onClickFinanceYearSelected ( dateInView, event, value, params ) {
+                if (this.isLoaded) {
+                    this.clearSelection()
+                }
+            },
+            onClickFinanceQuarterSelected ( dateInView, event, value, params ) {
+                let _dates = []
+                let _d = this.validateDate(dateInView)
+                params.map( (year, index) => {
+                    let _yr = this.validateDate(year)
+                    event.map( (val, index) => {
+                        _dates.push(...this.momentGetQuarterDates( year, val ))
+                    })
+                })
+                this.updateDateRange( _dates.sort() )
+            },
+            onClickFinancePeriodSelected ( dateInView, event, value, params ) {
+                let _dates = []
+                let _d = this.validateDate(dateInView)
+                params.map( (year, index) => {
+                    let _yr = this.validateDate(year)
+                    event.map( (val, index) => {
+                        _dates.push(...this.momentGetPeriodDates( year, val ))
+                    })
+                })
+                this.updateDateRange( _dates.sort() )
+            },
+            /** Helpers */
             getItemText (item) {
                 return item.text
             },
@@ -695,6 +753,23 @@
             yearNumbers (date) {
                 return this.momentYearNumbers(date).map( (val, index) => { return {text: val, value: val}} )
             },
+            periodList () {
+                return [
+                    {text: 'P1', value: 1},
+                    {text: 'P2', value: 2},
+                    {text: 'P3', value: 3},
+                    {text: 'P4', value: 4},
+                    {text: 'P5', value: 5},
+                    {text: 'P6', value: 6},
+                    {text: 'P7', value: 7},
+                    {text: 'P8', value: 8},
+                    {text: 'P9', value: 9},
+                    {text: 'P10', value: 10},
+                    {text: 'P11', value: 11},
+                    {text: 'P12', value: 12},
+                    {text: 'P13', value: 13},
+                ]
+            },
             quarterList () {
                 return [
                     {text: 'Q1', value: 1},
@@ -706,9 +781,11 @@
                 ]
             },
             /**  Utils */
-            enforceDateArg (date) {
+            validateDate (date) {
                 let _d = null
-                
+                if (date && typeof date === 'number') {
+                    _d = this.dateFromStr(date.toString())
+                }
                 if (date && typeof date === 'string') {
                     _d = this.dateFromStr(date)
                 } else if (date && typeof date.toISOString === 'function') {
@@ -716,14 +793,13 @@
                 } else {
                     _d = new Date()
                 }
-
                 return _d && typeof _d.toISOString === 'function' ? _d : null
             },
             /** Date Functions -> move to mixin */
             momentYearNumbers (date) {
                 let result = []
                 const currentYear = date ? date : this.dateConfig.pickerView1
-                let _date = this.enforceDateArg(currentYear)
+                let _date = this.validateDate(currentYear)
                 const maxYear = this.max ? parseInt(this.max, 10) : _date ? _date.getFullYear() + 10 : moment().year() + 10
                 const minYear = this.min ? parseInt(this.min, 10) : _date ? _date.getFullYear() - 10 : moment().year() - 10
                 for (let year = maxYear; year >= minYear; year--) {
@@ -732,18 +808,59 @@
                 return result.sort()
             },
             momentWeekNumbers (date) {                
-                let _d = this.enforceDateArg(date)
+                let _d = this.validateDate(date)
                 let _dy = _d ? _d.getFullYear() : moment().year()
 
-                let data = []
-                let weeks = moment().weeksInYear([_dy])
-                data[0] = {year: _dy}
-                for (let x=1; x<=weeks; x++) {
-                    let wStart = moment([_dy]).week(x).startOf('week')
-                    let wEnd = moment([_dy]).week(x).endOf('week').subtract(1, 'days')
-                    data[x] = {start: wStart, end: wEnd}
+                let _data = []
+                let _weeks = moment().weeksInYear([_dy])
+                _data[0] = {year: _dy}
+                for (let _x=1; _x<=_weeks; _x++) {
+                    let _wStart = moment([_dy]).week(_x).startOf('week')
+                    let _wEnd = moment([_dy]).week(_x).endOf('week').subtract(1, 'days')
+                    _data[_x] = {start: _wStart, end: _wEnd}
                 }
-                return data
+                return _data
+            },
+            momentMonthNumbers (date) {
+                let _d = this.validateDate(date)
+                let _dy = _d ? _d.getFullYear() : moment().year()
+
+                let _data = []
+                _data[0] = {year: _dy}
+                for (let _x=0; _x<12; _x++) {
+                    let _wStart = moment([_dy]).month(_x).startOf('month')
+                    let _wEnd = moment([_dy]).month(_x).endOf('month').subtract(1, 'days')
+                    _data[_x] = {start: _wStart, end: _wEnd}
+                }
+
+                return _data
+            },
+            momentQuarterNumbers (year) {
+                let _year = parseInt(year) || moment().year()
+                let _data = []
+                _data[0] = {year: _year}
+                for (let _x=1; _x<=4; _x++) {
+                    let _wStart = moment([_year]).quarter(_x).startOf('quarter')
+                    let _wEnd = moment([_year]).quarter(_x).endOf('quarter').subtract(1, 'days')
+                    _data[_x] = {start: _wStart, end: _wEnd}
+                }
+
+                return _data
+            },
+            momentPeriodNumbers (year) {
+                let _year = parseInt(year) || moment().year()
+                let _data = []
+                _data[0] = {year: _year}
+                let _weeks = this.momentWeekNumbers( year )
+                let _pn = 0
+                for (let _x=1; _x<=52; _x += 4) {
+                    _pn++
+                    let _wStart = _pn === 1 ? _weeks[_x].start : this.dateToISOStr( moment(_weeks[_x].start).add(1,'days') )
+                    let _wEnd = this.dateToISOStr( moment(_weeks[_x+3].end).add(1,'days') )
+                    _data[_pn] = {start: _wStart, end: _wEnd}
+                }
+
+                return _data
             },
             momentMonthShortNames () {
                 return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMM')})
@@ -752,17 +869,17 @@
                 return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMMM')})
             },
             momentStartOf (opt, date) {
-                let _d = this.enforceDateArg(date)  //returns null of validate date
+                let _d = this.validateDate(date)  //returns null of validate date
                 let _date = _d ? _d : moment()
                 return moment(_date).startOf(opt)
             },
             momentEndOf (opt, date) {
-                let _d = this.enforceDateArg(date)  //returns null or validate date
+                let _d = this.validateDate(date)  //returns null or validate date
                 let _date = _d ? _d : moment()               
                 return moment(_date).endOf(opt)
             },
             dateStartPrevWeek (date) {
-                let _d = this.enforceDateArg(date)
+                let _d = this.validateDate(date)
                 let _date = _d ? _d : moment()
                 let _dw = this.dateStartOfWeek(this.dateToISOStr(_date))
                 _dw.subtract(7, 'days')
@@ -786,28 +903,39 @@
                 return _t
             },
             dateEndOfMonth (date) {
-                let _d = this.enforceDateArg(date)
+                let _d = this.validateDate(date)
                 let _t = this.momentEndOf('month', _d.toISOString()).subtract(1,'days')
                 return _t
             },
             momentGetWeekDates (date, weekNumber) {
-                //let _d = this.enforceDateArg(date)
                 let _wn = parseInt(weekNumber) || 1
-                //let _year = _d.year ? _d.year() : _d.getFullYear ? _d.getFullYear() : null
-                //let _weekStr = _year ? `${_year}-${_wn}-` : `${_wn}-`
-                //let _days = [1,7].map((d) => { moment( `${_weekStr}-${d}` , 'YYYY-w-e') },_weekStr)
-
                 let _data = this.momentWeekNumbers(date)
-                //console.log(_data)
-                //console.log(_data[_wn])
 
-                //console.log(_d, _wn, _year, _weekStr, _days)
-                console.log( _data, _data[_wn].start.toISOString().substr(0,10), _data[_wn].end.toISOString().substr(0,10) )
-                //return [_data[_wn].start, _data[_wn].end]
-                return  [_data[_wn].start.toISOString().substr(0,10), _data[_wn].end.toISOString().substr(0,10) ]             
+                return  [ this.dateToISOStr(_data[_wn].start), this.dateToISOStr(_data[_wn].end) ]             
             },
+            momentGetMonthDates (date, monthNumber) {
+                let _mn = parseInt(monthNumber) || 0
+                let _data = this.momentMonthNumbers(date)
 
-            // END OF MOEMNT
+                return [ this.dateToISOStr(_data[_mn].start), this.dateToISOStr(_data[_mn].end) ]
+            },
+            momentGetYearDates (date, yearNumber) {
+                let _yn = parseInt(yearNumber) || moment().year()
+                return [ this.momentStartOf('year', _yn), this.momentEndOf('year',_yn)]
+            },
+            momentGetQuarterDates (date, quarterNumber) {
+                let _qn = parseInt(quarterNumber) || 1
+                let _data = this.momentQuarterNumbers(date)
+
+                return [ this.dateToISOStr(_data[_qn].start), this.dateToISOStr(_data[_qn].end) ]
+            },
+            momentGetPeriodDates (date, periodNumber) {
+                let _pn = parseInt(periodNumber) || 1
+                let _data = this.momentPeriodNumbers(date)
+
+                return [ this.dateToISOStr(_data[_pn].start), this.dateToISOStr(_data[_pn].end) ]
+            },
+            // END OF MOMENT
             dateFromStr (strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
                 if (typeof strDate === 'string') {
                     let yr  = parseInt(strDate.substring(0,4))
@@ -823,13 +951,20 @@
 
                 return null
             },
-            dateToStr (date) {
-                if (date && typeof date.toISOString === 'function') {
-                    return this.formatters.titleDate(date.toISOString().substr(0,10))
-                } else if (date && typeof date === 'string') {
-                    return this.formatters.titleDate(date)
-                } 
-                
+            dateToStr (date, format) {
+                if (format && moment) {
+                    if (date !== undefined && typeof date.toISOString === 'function') {
+                        return moment(this.dateToISOStr(date)).format(format)
+                    } else if (date !== undefined && typeof date === 'string') {
+                        return moment(date).format(format)
+                    }
+                } else {
+                    if (date && typeof date.toISOString === 'function') {
+                        return this.formatters.titleDate(date.toISOString().substr(0,10))
+                    } else if (date && typeof date === 'string') {
+                        return this.formatters.titleDate(date)
+                    } 
+                }
                 return null
             },
             dateToISOStr (date, len = 10) {
@@ -844,7 +979,7 @@
                     }
                 }
             },
-            dateToMonthYear(date) {
+            dateToMonthYear (date) {
                 if (date && typeof date.toISOString === 'function') {
                     return this.formatters.titleMonthYear(date.toISOString().substr(0,10))      
                 } else if (date && typeof date === 'string') {
@@ -852,9 +987,20 @@
                 }
                 return null          
             },
-            dateRangeToStr(chkIn,chkOut) {
-                const _cin = this.dateToStr(chkIn)
-                const _cout = this.dateToStr(chkOut)
+            dateRangeToStr (chkIn,chkOut) {
+                let _chkIn = this.validateDate(chkIn)
+                let _chkOut = this.validateDate(chkOut)
+                let _currentYear = this.validateDate(this.dateConfig.pickerView1)
+                let _format = null
+                if ( (_chkIn.getFullYear() !== _chkOut.getFullYear()) || 
+                      _chkIn.getFullYear() !== _currentYear.getFullYear() || 
+                      _chkOut.getFullYear() !== _currentYear.getFullYear()) {
+                    _format = 'MMM-DD-YYYY'
+                } else {
+                    _format = 'MMM-D'
+                }
+                const _cin = this.dateToStr(chkIn, _format)
+                const _cout = chkOut ? this.dateToStr(chkOut, _format) : chkOut
 
                 return `${_cout 
                             ? _cin 
@@ -866,10 +1012,10 @@
                         }`
 
             },
-            emitResults() {
+            emitResults () {
                 this.$emit('input', this.dateRange)
             },
-            monthYearToStr(chkIn,chkOut) {
+            monthYearToStr (chkIn,chkOut) {
                 const _cin = this.dateToMonthYear(chkIn)
                 const _cout = this.dateToMonthYear(chkOut)
 
@@ -947,6 +1093,33 @@
             getPickerColor(index) {
                 return this.color[index % this.color.length]
             },
+            getSiblingData (...params) {
+                let results = []
+
+                let [data, fields] = params
+                
+                if (data.hasOwnProperty('options') && Array.isArray(data.options)) {
+                    data.options.forEach( (item) => {
+                
+                            if (Array.isArray(fields)) {
+                                fields.split(',').map( (f) => {     
+                                    if ( item.ref === f) {
+                                        results.push(item.value)
+                                    }
+                                })
+                            } else if (typeof fields === 'string') {
+                                if ( item.ref === fields ) {
+                                    results = [item.value]
+                                }
+                            }                    
+                
+                    })
+                
+                }
+
+                return results
+
+            },
             isAnyPickerVisible() {
                 let _count = -1
                 if (this.dateRange.length !== 2) {
@@ -1021,40 +1194,6 @@
                     this.dateConfig[`pickerView${x}`] = _nd.substr(0,7)
                 }
 
-                //set the min for the last picker
-                // if (index !== this.numPickers) {
-                //     _nd = this.dateEndOfMonth(this.dateFromStr(this.dateConfig[`pickerView${this.numPickers}`]))
-                //     this.dateConfig[`pickerMin${this.numPickers}`] = this.dateToISOStr(_nd,7)
-                // }
-                // this.$nextTick( () => {
-                //     console.log('visible count: ',this.isAnyPickerVisible())
-
-                //     let _count = 0
-                //     for (let x=1; x<=this.numPickers; x++) {
-                //         if (this.isPickerVisible(x)) _count++
-                //     }
-                //     console.log('my count is: ',_count)
-
-                //     for (let x=index; x<=this.numPickers; x++) {
-                //         _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,1).toISOString()
-                //         if (_count <= 1) {
-                //             console.log(`Removing limit for index ${x}`)
-                //             this.dateConfig[`pickerMin${x}`] = undefined
-                //         } else {
-                //             if (x > 1 || this.autoHide) {
-                //                 if ((x === 1 && this.allowBackInTime) || x > 1) {
-                //                     console.log(`numPickersVision is ${this.numPickersVisible} so limit is enabled`)
-                //                     this.dateConfig[`pickerMin${x}`] = _nd.substr(0,10)
-                //                 } else {
-                //                     this.dateConfig[`pickerMin${x}`] = undefined
-                //                 }
-                //             } else {
-                //                 this.dateConfig[`pickerMin${x}`] = undefined
-                //             }
-                //         }
-                //     }
-                // })
-
             },
             showHidePanel(panel) {
                 panel.show = !panel.show
@@ -1067,26 +1206,19 @@
                 })
             },
             onAction( ...attributes ) { 
-
-                if (attributes.length === 2) {
-                    var [fnName, callbackAttributes] = attributes
-                    let _fn = this[fnName]
-                    let _date = null
-                    if (_fn) _fn(_date);
-                } else if (attributes.length === 3) {
-                    var [event, fnName, callbackAttributes] = attributes
-                    let _fn = this[fnName]
-                    if (_fn) _fn(event, callbackAttributes) 
-                }
-            
-
-                //get the date of the first picker
-                // if (startFromNow) {
-                //     let _strDate = this.dateConfig.pickerView1
-                //     let _d = this.enforceDateArg(_strDate)
-                //     _date = _d ? _d : moment()
-                // }
                 
+                let _strDate = this.dateConfig.pickerView1
+                let _d = this.validateDate(_strDate)
+                let _fn = null
+
+                var [event, fnName, value, parameters] = attributes
+                _fn = this[fnName]
+                if (_fn) {
+                    this.setCurrentAction(fnName)
+                    _fn(_d, event, value, parameters)
+                    this.currentAction = null
+                }
+           
             },
             buildSelectionList(fnName) {
                 let _fn = this[fnName]
@@ -1096,7 +1228,7 @@
         watch: {
             dateRange: {
                 handler(val, prev) {
-                    if (this.dateRange.length > 2) {
+                    if (!this.multiRange && this.dateRange.length > 2) {
                         this.dateRange.splice(1,1)
                     }
                 },
@@ -1108,8 +1240,10 @@
                 }
             }
         },
-        created() {
-            for (let i=1; i<=this.numPickers; i++) {
+        mounted() {
+            this.dateConfig.visiblePickers = this.$vuetify.breakpoint.xsOnly ? 1 : this.numPickers
+    
+            for (let i=1; i<=this.dateConfig.visiblePickers; i++) {
                 let _d = null
                 //user supplied a start date
                 if (this.startDate) {
@@ -1125,27 +1259,16 @@
                     _d = new Date()
                 }
 
+                //setup a min if we are not allowed to go back in time
+                if (!this.allowBackInTime) {
+                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 7))
+                }
                 //setup the picker view date for this index
                 _d.setMonth(_d.getMonth()+i-1)                   
                 this.$set(this.dateConfig, `pickerView${i}`, this.dateToISOStr( _d, 7 ) )
                 
-                if (i === this.numPickers) {
-                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 7 ))
-                }
-                // if (i > 1 || this.autoHide) {
-                //     if ((i === 1 && this.allowBackInTime) || i > 1) {
-                //         if (i > 1) _d.setDate(0)
-                //         this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d ))
-                //     }
-                // } else {
-                //     this.$set(this.dateConfig, `pickerMin${i}`, undefined)
-                // }
-
-                // this.$set(this.dateConfig, `pickerMax${i}`, undefined)
+                this.isLoaded = true
             }
-        },
-        mounted() {
-            this.dateConfig.visiblePickers = this.numPickers
         }
     };
 </script>

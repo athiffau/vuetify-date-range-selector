@@ -2,10 +2,11 @@
     <div id="app">
         <v-app :dark="dark">
             <v-date-range-picker 
-                :allowBackInTime=true
-                :autoHide=false     
+                :allow-back-in-time=true
+                :auto-hide=false     
                 :color="color"
                 :no-title=false
+                :multi-range=false
                 :show-week=true
                 :transitions=true
                 type="date"
