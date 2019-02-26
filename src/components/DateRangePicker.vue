@@ -1,483 +1,91 @@
 <template>
 
-        <v-layout row wrap>
-            <v-flex xs10 sm6 md4>
-                <v-menu
-                ref="menu"
-                :close-on-content-click="false"
-                v-model="isOpen"
-                :nudge-right="$vuetify.breakpoint.xsOnly ? 15 : $vuetify.breakpoint.mdAndUp ? 40 : 20"
-                transition="scale-transition"
-                offset-y
-                full-width
-                min-width="290px"
+    <v-layout row wrap v-resize="onResize">
+        <v-flex>
+            <v-card
                 :dark="dark"
-                >
-                    <v-text-field
-                        slot="activator"
-                        v-model="dateRangeText"
-                        :label="label"
-                        :prepend-icon="icon"
-                        readonly 
+                :width="maxCardWidth"
+                :ref="'pickerContainer'">
+                <slot name="drawerOptions"></slot>
+                <v-layout row wrap>
+                <template v-for="index in dateConfig.visiblePickers">  
+                    <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
+                        :allow-date-change="index === 1"
+                        :allowed-dates="allowedDates"
+                        :color="color"
                         :dark="dark"
-                        :solo="solo"
-                
-                    ></v-text-field>
-                    <v-card
-                        :dark="dark"
-                        :max-width="maxWidth"
+                        :day-format="dayFormat"
+                        :event-color="eventColor"
+                        :events="events"
+                        :first-day-of-week="firstDayOfWeek"
+                        :header-color="getPickerColor(index)"
+                        :header-date-format="headerDateFormat"
+                        :hover-link="dateConfig.hoverLink"
+                        :key="index"
+                        :light="light"
+                        :locale="locale"
+                        :min="dateConfig[`pickerMin${index}`]"
+                        :max="dateConfig[`pickerMax${index}`]"
+                        multiple
+                        :next-icon="nextIcon"
+                        :no-title="noTitle" 
+                        :picker-date="dateConfig[`pickerView${index}`]"
+                        :prev-icon="prevIcon"
+                        :range="range"
+                        :reactive="reactive"
+                        :ref="`pickerView${index}`"
+                        :scrollable="scrollable"
+                        :show-current="showCurrent"
+                        :show-week="showWeek"
+                        :title-date-format="date => getPickerTitle(index)"
+                        :type="type"
+                        :year-format="yearFormat"
+                        :year-icon="yearIcon"
+                        v-on:change="date => onInputChange(date, index)"
+                        v-on:hoverLink="setHoverLink"
+                        v-on:input="dates => onInputChange(dates, index)" 
+                        v-on:click:date="date => onDateClicked(date, index)" 
+                        v-on:pickerType="pickerType => onHeaderClicked(pickerType, index)"
+                        v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
                     >
-                        <v-navigation-drawer
-                            v-model="pickerOptionsShow"
-                            absolute
-                            temporary
-                        >
-                            <v-layout column fill-height>
-                            <v-toolbar
-                            color="primary"
-                            dark
-                            flat
-                            >
-                                <v-list class="pa-1">
-                                    <v-list-tile avatar>
-                                        <v-list-tile-avatar>
-                                            <v-icon>event</v-icon>
-                                        </v-list-tile-avatar>
-
-                                        <v-list-tile-content>
-                                            <v-list-tile-title>Picker Options</v-list-tile-title>
-                                        </v-list-tile-content>
-
-                                        <v-list-tile-action>
-                                            <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                                <v-icon >chevron_left</v-icon>
-                                            </v-btn> 
-                                        </v-list-tile-action>
-                                    </v-list-tile>
-                                </v-list>
-                            </v-toolbar>
-                                <v-flex xs12 sm6 md4>
-                                    <v-list class="pa-1" >
-                                        <v-list-group
-                                            v-for="(option,index) in pickerOptions" 
-                                            :key="index"
-                                            v-model="option.active"
-                                            :prepend-icon="option.icon"
-                                            no-action
-                                        >
-                                            <v-list-tile slot="activator">
-                                                <v-list-tile-title>{{ option.title }}</v-list-tile-title>
-                                            </v-list-tile>
-
-                                            <v-list-tile-content>
-                                                <v-layout align-center justify-start column fill-height>
-                                                    <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="weekOption">
-                                                        <v-layout row fill-height v-for="(compo,index) in option.options" :key="index" class="mx-3 py-1"> 
-                                                            <component 
-                                                                block
-                                                                :clearable="multiRange || compo.multiple"
-                                                                :deletable-chips=true
-                                                                :dense=true
-                                                                flat 
-                                                                :hide-details=true
-                                                                :hint="compo.hint" 
-                                                                :is="compo.type"
-                                                                :items="buildSelectionList(compo.items)"
-                                                                :item-text="getItemText"
-                                                                :item-value="getItemValue"
-                                                                :label="compo.label"
-                                                                :loading="compo.loading"
-                                                                :multiple=true
-                                                                :no-data-text="compo.label"
-                                                                :prepend-icon="compo.icon"
-                                                                style="width: 100%;"
-                                                                :single-line=true
-                                                                :small-chips=true
-                                                                
-                                                                @change="onAction(
-                                                                            $event, 
-                                                                            compo.action, 
-                                                                            typeof compo.value === 'boolean' ? !compo.value : compo.value, 
-                                                                            getSiblingData(option, compo.needs) || null)"
-                                                                :value="compo.isOpen"
-                                                                v-bind:compo="compo"
-                                                                v-model="compo.value"
-                                                            >
-                                                                <template
-                                                                slot="selection"
-                                                                slot-scope="{item, index}"
-                                                                >
-                                                                    <template v-if="item.text.length > 5">
-                                                                        <template v-if="compo.value.length === 1">
-                                                                            <v-chip v-if="index === 0" :small=true>
-                                                                                <span>{{ item.text }}</span>
-                                                                            </v-chip>
-                                                                        </template>
-                                                                        <template v-else>
-                                                                            <span v-if="index === 0"
-                                                                                class="grey--text"
-                                                                            >
-                                                                                {{compo.value.length}} selected
-                                                                            </span>
-                                                                        </template>
-                                                                    </template>
-                                                                    <template v-else>                                                        
-                                                                        <template v-if="compo.value.length <= 3">
-                                                                            <v-chip :small=true>
-                                                                                <span>{{ item.text }}</span>
-                                                                            </v-chip>
-                                                                        </template>
-                                                                        <template v-else>    
-                                                                            <v-chip v-if="index <= 1" :small=true>
-                                                                                <span>{{ item.text }}</span>
-                                                                            </v-chip>
-                                                                            <span v-if="index === 2"
-                                                                                class="grey--text caption"
-                                                                            >(+{{ compo.value.length - 2}} others)</span>
-                                                                        </template>
-                                                                    </template>
-                                                                </template>
-                                                                <template slot="default">
-                                                                    {{ compo.title }}
-                                                                </template> 
-                                                            </component>
-                                                        </v-layout>
-                                                    </v-btn-toggle>
-                                                </v-layout>
-                                            </v-list-tile-content>
-
-                                        </v-list-group>
-                                    </v-list>
-                                </v-flex>
-                            </v-layout>
-                        </v-navigation-drawer>
-                        <v-layout row wrap>
-                        <template v-for="index in dateConfig.visiblePickers">  
-                            <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
-                                :allow-date-change="index === 1"
-                                :allowed-dates="allowedDates"
-                                :color="getPickerColor(index)"
-                                :dark="dark"
-                                :day-format="dayFormat"
-                                :event-color="eventColor"
-                                :events="date => eventsEx(date, index)"
-                                :first-day-of-week="firstDayOfWeek"
-                                :header-color="headerColor"
-                                :header-date-format="headerDateFormat"
-                                :hover-link="dateConfig.hoverLink"
-                                :key="index"
-                                :light="light"
-                                :locale="locale"
-                                :min="dateConfig[`pickerMin${index}`]"
-                                :max="dateConfig[`pickerMax${index}`]"
-                                :multiple=true
-                                :next-icon="nextIcon"
-                                :no-title="noTitle" 
-                                :picker-date="dateConfig[`pickerView${index}`]"
-                                :prev-icon="prevIcon"
-                                :range="range"
-                                :reactive="reactive"
-                                :scrollable="scrollable"
-                                :show-current="showCurrent"
-                                :show-week="showWeek"
-                                :title-date-format="date => getPickerTitle(date, index)"
-                                :type="type"
-                                :year-format="yearFormat"
-                                :year-icon="yearIcon"
-                                v-on:hoverLink="setHoverLink"
-                                v-on:input="dates => onInputChange(dates, index)" 
-                                v-on:click:date="date => onDateClicked(date, index)" 
-                                v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
-                            >
-                            </v-date-picker>
-                        </template>  
-                        </v-layout>
-                        <v-card-actions>
-                            <div class="text-xs-center mx-2">
-                                <v-btn flat fab small @click="pickerOptionsShow = !pickerOptionsShow">
-                                    <v-icon >more_vert</v-icon>
-                                </v-btn>
-                            </div>
-                            <v-divider vertical></v-divider>
-                            <template v-if="weeksOptions && (numPickersVisible > 1 || !this.autoHide)">                           
-                                <v-item-group value="false" class="hidden-lg-and-down" v-if="this.maxWidth === null">
-                                    <v-layout align-center justify-start row fill-height class="overflow-hidden; pl-3 pt-1">
-                                        <v-item v-for="(option,index) in pickerOptions"
-                                            :key="index"
-                                        >
-                                            <div v-if="option.visible" slot-scoped="{ active }">
-                                                {{option.title}}
-                                                <v-btn flat fab small @click="showHidePanel(option)" slot="activator" class="mr-2">
-                                                
-                                                    <v-icon>{{option.show ? 'unfold_less' : 'unfold_more'}}</v-icon>
-                                                
-                                                </v-btn>
-
-                                                <v-btn-toggle v-model="weekOption" v-if="option.show" class="mx-2">
-                                                    <component v-for="(compo,index) in option.options"
-                                                        class="ma-0 mx-1 pa-0 px-1"
-                                                        :clearable="multiRange || compo.multiple"
-                                                        :deletable-chips=true
-                                                        :dense=true
-                                                        :flat=true
-                                                        :hide-details=true                                                    
-                                                        :is="compo.type"
-                                                        :items="buildSelectionList(compo.items)"
-                                                        :item-text="getItemText"
-                                                        :item-value="getItemValue"
-                                                        :key="index"
-                                                        :label="compo.label"
-                                                        :loading="compo.loading"
-                                                        :multiple="compo.multiple"
-                                                        :no-data-text="compo.label"
-                                                        :prepend-icon="compo.icon"
-                                                        :ref="compo.ref"
-                                                        :single-line=true
-                                                        :small-chips=true
-                                                        style="max-width:220px;"
-                                                        @change="onAction(
-                                                            $event, 
-                                                            compo.action, 
-                                                            typeof compo.value === 'boolean' ? !compo.value : compo.value, 
-                                                            getSiblingData(option, compo.needs) || null)"
-                                                        :value="compo.isOpen"
-                                                        v-bind:compo="compo"
-                                                        v-model="compo.value"
-                                                    >
-                                                        <template
-                                                        slot="selection"
-                                                        slot-scope="{item, index}"
-                                                        v-bind:compo="compo"
-                                                        >
-                                                            <template v-if="item.text.length > 5">
-                                                                <template v-if="compo.value.length === 1">
-                                                                    <v-chip v-if="index === 0" :small=true>
-                                                                        <span>{{ item.text }}</span>
-                                                                    </v-chip>
-                                                                </template>
-                                                                <template v-else>
-                                                                    <span v-if="index === 0"
-                                                                        class="grey--text"
-                                                                    >
-                                                                        {{compo.value.length}} selected
-                                                                    </span>
-                                                                </template>
-                                                            </template>
-                                                            <template v-else>                                                        
-                                                                <!-- <template v-if="compo.value.length <= 2">
-                                                                    <v-chip :small=true>
-                                                                        <span>{{ item.text }}</span>
-                                                                    </v-chip>
-                                                                </template>
-                                                                <template v-else>     -->
-                                                                    <v-chip v-if="index === 0" :small=true>
-                                                                        <span>{{ item.text }}</span>
-                                                                    </v-chip>
-                                                                    <span v-if="index === 1"
-                                                                        class="grey--text caption"
-                                                                    >(+{{ compo.value.length - 1}} others)</span>
-                                                                <!-- </template> -->
-                                                            </template>
-                                                        </template>
-                                                        <template slot="default">
-                                                            {{ compo.title }}
-                                                        </template>   
-                                                    </component> 
-                                                </v-btn-toggle>
-                                            </div>
-                                            <div v-else slot-scoped="{action}"></div>
-                                    
-                                        </v-item>
-                                    </v-layout>
-                                </v-item-group>
-                            </template>                        
-                            <v-spacer></v-spacer>
-                            <v-divider vertical class="hidden-lg-and-down"></v-divider>
-                            <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
-                            <v-btn @click="isOpen = false" class="mx-2" color="green">Apply</v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-menu>
-            </v-flex>
-        </v-layout>
+                    </v-date-picker>
+                </template>  
+                </v-layout>
+                <v-card-actions>
+                    <div v-if="$slots.drawerOptions" class="text-xs-center mx-2">
+                        <v-btn flat fab small @click="toggleOptionsDrawer">
+                            <v-icon >more_vert</v-icon>
+                        </v-btn>
+                    </div>
+                    <v-divider vertical v-if="$slots.drawerOptions"></v-divider>
+                    <slot name="panelOptions" v-if="(numPickersVisible > 1 || !this.autoHide) && this.maxWidth === null"></slot>                      
+                    <v-spacer></v-spacer>
+                    <v-divider vertical class="hidden-lg-and-down"></v-divider>
+                    <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
+                    <v-btn @click="onClickSubmit" class="mx-2" color="green">Apply</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-flex>
+    </v-layout>
 
 </template>
 
 <script>
     import VDatePicker from 'vuetify/es5/components/VDatePicker/VDatePicker'   
-    import moment from 'moment'
-    var myMoment = moment
+    
     export default {
         name: 'v-date-range-picker',
         extends: VDatePicker,
         data: () => ({
-            currentAction: null,
-            deltaOrigin: 0,
+            maxCardWidth: undefined,
             dateRange: [],
             dateConfig: {
                 hoverLink: null,
-                currentDate: [],
-                updateEvent: [],
+                pickerView1: null,
                 visiblePickers: 0
             },
-            isOpen: false,
-            isLoaded: false,
             numPickersVisible: 0,
-            pickerOptionsShow: false,
-            pickerOptions: [ 
-                { 
-                    title: 'Helpers', 
-                    icon: 'fastfood',
-                    visible: true,
-                    show: false,
-                    options: [
-                        {
-                            title: 'Yesterday',
-                            type: 'v-btn',
-                            icon: '',
-                            action:'onClickYesterday',
-                            value: false
-                        },
-                        {
-                            title: 'Last Week',
-                            type: 'v-btn',
-                            icon: '',
-                            action: 'onClickLastWeek',
-                            value: false
-                        },
-                        {
-                            title: 'This Week',
-                            type: 'v-btn',
-                            icon: '',
-                            action: 'onClickThisWeek',
-                            value: false
-                        },
-                        {
-                            title: 'Last Month',
-                            type: 'v-btn',
-                            icon: '',
-                            action: 'onClickLastMonth',
-                            value: false
-                        },
-                        {
-                            title: 'This Month',
-                            type: 'v-btn',
-                            icon: '',
-                            action: 'onClickThisMonth',
-                            value: false
-                        },
-                        {
-                            title: 'Next 3 Months',
-                            type: 'v-btn',
-                            icon: '',
-                            action: 'onClickNext3Months',
-                            value: false
-                        }
-                    ] 
-                },
-                { 
-                    title: 'Calendar', 
-                    icon: 'calendar_today',
-                    visible: true,
-                    show: false,
-                    options: [
-                        {
-                            title: 'Week by number',
-                            label: 'Week by number',
-                            type: 'v-select',
-                            multiple: true,
-                            items: 'weekNumbers',
-                            icon: '',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickCalWeekSelect',
-                            ref: 'calWeekSelection',
-                            value: []
-                        },
-                        {
-                            title: 'Months by name',
-                            label: 'Month by name',
-                            type: 'v-select',
-                            multiple: true,
-                            items: 'monthNames',
-                            icon: '',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickCalMonthSelect',
-                            ref: 'calMonthSelection',
-                            value: []
-                        },
-                        {
-                            title: 'Years',
-                            label: 'Year',
-                            type: 'v-select',
-                            multiple: true,
-                            items: 'yearNumbers',
-                            icon: '',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickCalYearSelect',
-                            ref: 'calYearlSelection',
-                            value: []
-                        }
-                    ] 
-                },
-                {
-                    title: 'Financial',
-                    icon: 'attach_money',
-                    visible: true,
-                    show: false,
-                    options: [
-                        {
-                            title: 'Year',
-                            label: 'Select year',
-                            type: 'v-select',
-                            attributes: {
-                                outline: true
-                            },
-                            multiple: false,
-                            items: 'yearNumbers',
-                            icon: 'looks_one',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickFinanceYearSelected',
-                            ref: 'financeYearChoice',
-                            value: []
-                        },
-                        {
-                            title: 'Quarter',
-                            label: 'Select quarter(s)',
-                            type: 'v-select',
-                            multiple: true,
-                            items: 'quarterList',
-                            icon: 'looks_two',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickFinanceQuarterSelected',
-                            ref: 'financeQuarterChoice',
-                            needs: 'financeYearChoice',
-                            value: []
-                        },
-                        {
-                            title: 'Periods',
-                            label: 'Select period(s)',
-                            type: 'v-select',
-                            multiple: true,
-                            items: 'periodList',
-                            icon: 'looks_two',
-                            isOpen: undefined,
-                            loading: false,
-                            action: 'onClickFinancePeriodSelected',
-                            ref: 'financePeriodChoice',
-                            needs: 'financeYearChoice',
-                            value: []
-                        }
-                    ]                   
-                }
-            ],
-            visibility: {},
-            weeksOptions: true,
-            weekOption: null
+            pickerOptionsShow: false
         }),
         props: {
             allowBackInTime: {
@@ -486,27 +94,31 @@
             },
             autoHide: {
                 type: Boolean,
-                default: true
+                default: false
             },
-            autoFocusOnDateChange: {
+            autoFocus: {
                 type: Boolean,
-                default: true
+                default: false
+            },
+            autoSize: {
+                type: Boolean,
+                default: false
             },
             color: {
                 type: Array,
                 default: null
             },
-            rangeColors: {
+            headerColor: {
                 type: Array,
-                default: null
+                default: () => []
             },
-            label: {
-                type: String,
-                default: 'Date-range picker'
+            isDrawerOpen: {
+                type: Boolean,
+                defalut: false
             },
-            icon: {
-                type: String,
-                default: 'event'
+            liveUpdate: {
+                type: Boolean,
+                default: false
             },
             noTitle: {
                 type: Boolean,
@@ -516,13 +128,30 @@
                 type: Number,
                 default: null
             },
+            mode: {
+                type: String,
+                default: 'fuzzy',
+                validator: value => ['strict','lazy','fuzzy'].includes(value)
+            },
             numPickers: {
                 type: Number,
                 default: 2
             },
-            multiRange: {
+            multiple: {
+                type: Boolean,
+                default: true
+            },
+            multiRange: {   //TODO
                 type: Boolean,
                 default: false
+            },
+            range: {
+                type: Boolean,
+                default: true
+            },
+            rangeColors: {  //TODO
+                type: Array,
+                default: null
             },
             solo: {
                 type: Boolean,
@@ -534,253 +163,289 @@
             }
         },
         computed: {
-            dateRangeText: {
-                get() {
-                    this.dateRange.sort()
-
-                    if (this.dateRange.length === 2) {
-                        return this.dateRangeToStr(this.dateRange[0], this.dateRange[1])
-                    } else if (this.dateRange.length === 1) {
-                        return this.dateRangeToStr(this.dateRange[0], '')
-                    } else {
-                        return ''
+            pickerView() {
+                return this.dateConfig.pickerView1
+            }
+        },
+        provide () {
+            return {
+                locale: this.locale,
+                mode: this.mode           
+            }
+        },
+        watch: {
+            pickerView: {
+                handler(val,prev) {
+                    if (this.tableDate !== val) {
+                        this.tableDate = val
+                    }
+                }
+            },
+            tableDate: {
+                handler(val) {
+                    this.$emit('update:pickerDate', val)
+                }
+            },
+            dateRange: {
+                handler(val, prev) {
+                    if (!this.multiRange && this.dateRange.length > 2) {
+                        this.dateRange.splice(1,1)
+                    }
+                } 
+            },
+            isDrawerOpen: {
+                handler(val) {
+                    this.pickerOptionsShow = val
+                }
+            },
+            value: {
+                handler(val, prev) {
+                    if (Array.isArray(val)) {
+                        if (!val.length) {
+                            this.dateRange = val
+                            this.autoFocusPicker(this.now)
+                        } else {
+                            if (!val.every((value,index) => value === this.dateRange[index])) {
+                                if (!this.allowBackInTime && this.deltaDate(this.now, val) < 0 ) {
+                                    this.processMode(val)
+                                } else {
+                                    this.dateRange = val
+                                    if (this.autoFocus) {
+                                        this.autoFocusPicker()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            pickerOptionsShow: {
+                handler(val) {
+                    this.$emit('update:pickerVisible', val)
+                }
+            },
+            autoSize: {
+                handler(val, prev) {
+                    if (val !== prev) {
+                        this.onResize()
                     }
                 }
             }
         },
         methods: {
-            setCurrentAction ( actionName ) {
-                let _actions = []
-                _actions.push(actionName)
-                this.pickerOptions.forEach( (item, index) => {
-                    item.options.forEach( (val, index) => {
-                        if (val.action === actionName && val.needs !== undefined) {
-                            _actions.push(val.needs)
-                        }
-                    })
-                })
-
-                this.currentAction = _actions
-            },
-            clearCurrentAction() {
-                this.currentAction = null
-            },
-            clearSelection () {
-                this.dateRange = []
-                this.weekOption = null
-                if (this.currentAction) {
-                    let _ca = this.currentAction
-                    this.pickerOptions.forEach( (item, index) => {
-                        item.options.forEach( (val, index) => {
-                            if (!_ca.includes(val.ref) && !_ca.includes(val.action) && val.value !== undefined) {
-                                val.value = []
-                            }
-                        }) 
-                    })
+            /**
+             * In support of autoFocus property. When enabled, the master picker
+             * will be autoset to the earliest date in the selection.
+             * 
+             * @returns {void}
+             */
+            autoFocusPicker (date = null) {
+                if (date !== null) {
+                    let _date = this.validateDate(date)
+                    this.onPickerUpdate(_date.toISOString(), 1)
+                } else {
+                    // let _years = this.getYears(this.dateRange)
+                    // console.log('years', _years)
+                    // if (_years.length > 0) {
+                    //     let _pickerDate = this.dateConfig['pickerView1']
+                    //     console.log('pickerDAte', _pickerDate)
+                    //     let _pd = this.getYears(_pickerDate)
+                    //     console.log('Picker date year: ', _pd)
+                    //     if (_pd.length > 0) {
+                    //         if ( _years.findIndex(year => year === _pd[0] ) === -1) {
+                    //             this.onPickerUpdate(this.dateRange[0], 1)
+                    //         }
+                    //     }
+                    // }
+                    this.onPickerUpdate(this.dateRange[0], 1)
                 }
             },
+            
+            /**
+             * In support of quick selection helpers;
+             * 
+             * clearSelection clears previous user selections
+             *  
+             * @return {void}
+             */
+            clearSelection () {
+                this.dateRange = []
+            },
+
+            /**
+             * resetPickerModes iterates through all visible
+             * picker settings and resets the type property
+             * to 'date'
+             * 
+             * @return {void}
+             */
+            resetPickerModes () {
+                for (let _x=1; _x<=this.numPickers; _x++) {
+                    let pickerName = `pickerView${_x}`
+                    if (this.dateConfig[pickerName] !== 'date') {
+                        let picker = Array.isArray(this.$refs[pickerName]) 
+                                ? this.$refs[pickerName][0]
+                                : this.$refs[pickerName]
+
+                        picker.activePicker = 'DATE'
+                    }
+                }
+            },
+
+            /**
+             * In support of quick selection helpers;
+             * 
+             * hideOptionsDrawer sets drawer model so that
+             * the drawer is removed from view
+             * 
+             * @return {void}
+             */
             hideOptionsDrawer () {
                 this.pickerOptionsShow = false
             },
+
+            /**
+             * In support of quick selection helpers;
+             * 
+             * Hide or show the picker options drawer
+             * 
+             * @return {void}
+             */
+            toggleOptionsDrawer () {
+                this.pickerOptionsShow = !this.pickerOptionsShow
+            },
+
+            /**
+             * Handler for clear button
+             * 
+             * onClickClear resets the user interface; clears
+             * and previous selection; generates input event 
+             * 
+             * @return {void}
+             */
             onClickClear () {
                 this.clearSelection()
-                this.emitResults()
-                this.isAnyPickerVisible()
+                this.resetPickerModes()
+                this.emitUpdate()
+                this.updateNumPickerVisible()
             },
+
+            /**
+             * Handler for submit button
+             * 
+             * onClickSubmit generates input event; closes the
+             * menu
+             * 
+             * @return {void}
+             */
+            onClickSubmit () {
+                this.emitResults()
+                this.isOpen = false
+            },
+
+            /**
+             * Resize event handler
+             * 
+             * If auto size is enabled, onResize alters the number of date pickers displayed on screen
+             * in an effort to avoid overflow.
+             * 
+             * @return {void}
+             */
+            onResize () {  
+                if (this.autoSize) {
+                    let _screenWidth = window.innerWidth
+                    let _screenHeight = window.innerHeight
+                    
+                    let _picker = Array.isArray(this.$refs['pickerView1'])
+                            ? this.$refs['pickerView1'][0]
+                            : this.$refs['pickerView1']
+                    
+                    let _pickerWidth = _picker && _picker.width ? _picker.width : 290
+                    let _pickerHeight = _picker && _picker.height ? _picker.height : 374
+
+                    if (_screenWidth <= 700) {
+                        this.dateConfig.visiblePickers = 1
+                    } else if (_screenWidth > 700 && _screenWidth <= 1024) {
+                        this.dateConfig.visiblePickers = Math.min(2, this.numPickers)
+                    } else if (_screenWidth > 1024 && _screenWidth <= 1368) {
+                        this.dateConfig.visiblePickers = Math.min(3, this.numPickers)
+                    } else {
+                        this.dateConfig.visiblePickers = this.numPickers
+                    }
+
+                    this.maxCardWidth = this.maxWidth ? Math.min(this.maxWidth, this.dateConfig.visiblePickers * _pickerWidth) : this.dateConfig.visiblePickers * _pickerWidth
+
+                    let vMultiplier = Math.floor(_screenHeight / (_pickerHeight * 1.1))
+
+                    if (vMultiplier > 1) {
+                        this.dateConfig.visiblePickers = Math.min(this.numPickers, this.dateConfig.visiblePickers * vMultiplier)
+                    }                    
+                }
+            },
+
+            /** ==============================  Helpers  ============================== */
+
+            processMode (dates) {
+                if (this.mode === 'strict') {
+                    this.emitError('Date range is not allowed.')
+                } else if (this.mode === 'lazy') {
+                    if (this.todayIsInRange(dates)) {
+                        this.updateDateRange(dates)
+                        this.emitWarning('Date range includes past dates.')
+                    } else {
+                        this.emitError('Date range is not allowed.')
+                    }
+                } else if (this.mode === 'fuzzy') {
+                    this.updateDateRange(dates)
+                    this.emitInfo('Last selection could not be process. Date is in the past.')
+                }
+            },
+
+            todayIsInRange ( dates = null ) {
+                let _now = this.dateToISOStr(this.now)
+                if (Array.isArray(dates) && dates.length >= 2) {
+                    //TODO: support multi-rante
+                    if (dates.length === 2) {
+                        return this.deltaDate(dates[0],_now) > 0 && this.deltaDate(_now, dates[1]) > 0
+                    }
+                }
+            },
+
+            /**
+             * Private Helper function
+             * 
+             * updateDateRange updates selection; generates
+             * input event
+             *  
+             * @param  {Array}  dates   String[] containing user selection
+             * @return {void}
+             */
             updateDateRange (dates) {
                 if (!Array.isArray(dates)) return
-                this.clearSelection()   //should it be onClickClear() ?
-                this.dateRange.push(dates[0])
-                this.dateRange.push(dates[dates.length - 1])
-                this.emitResults()
-                this.isAnyPickerVisible()
-            },
-            /** Toggle button handlers */
-            onClickYesterday (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _d = new Date()
-                    _d.setDate(_d.getDate()-1)
-                    this.dateRange.push(this.dateToISOStr(_d))
+                this.clearSelection()  
+                if (this.multiRange) {
+                    this.dateRange.push(dates)
+                } else {
+                    this.dateRange.push(dates[0])
+                    this.dateRange.push(dates[dates.length - 1])
                 }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickLastWeek (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _d = new Date()
-                    this.dateRange.push(this.dateToISOStr(this.dateStartPrevWeek( _d)) )
-                    this.dateRange.push(this.dateToISOStr(this.dateEndPrevWeek(_d)) )
-                }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickThisWeek (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _d = new Date()
-                    let _start = this.dateToISOStr( this.dateStartOfWeek( _d ) )
-                    this.dateRange.push( _start )
-                    let _end = this.dateToISOStr( this.dateEndOfWeek( _d ) )
-                    this.dateRange.push( _end )
-                }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickNextMonth (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _start = this.dateToISOStr( this.dateStartOfMonth().add(1, 'months') )
-                    let _end = this.dateToISOStr( this.dateEndOfMonth( _start ) )
-                    this.dateRange.push( _start )
-                    this.dateRange.push( _end )
-                }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickLastMonth (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _start = this.dateToISOStr( this.dateStartOfMonth().subtract(1, 'months'))
-                    let _end = this.dateToISOStr( this.dateEndOfMonth( _start) )
-                    this.dateRange.push( _start )
-                    this.dateRange.push( _end )
-                }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            onClickThisMonth (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    this.dateRange.push( this.dateToISOStr(this.dateStartOfMonth() ))
-                    this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth() ))
-                }
-                this.emitResults()  
-                this.hideOptionsDrawer()
-            },
-            onClickNext3Months (dateInView, event, value, params) {
-                /* don't use validateDate() which removes day from date */
-                this.clearSelection()
-                if (value === true) {
-                    let _d = this.dateStartOfMonth().add(1, 'months')
-                    this.dateRange.push( this.dateToISOStr( _d ))
-                    _d.add(2, 'months')
-                    this.dateRange.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
-                }
-                this.emitResults()
-                this.hideOptionsDrawer()
-            },
-            /** Select handlers */
-            //The following functions are not based on today's date
-            onClickCalWeekSelect ( dateInView, event, value, params ) {
-                let _dates = []
-                event.map( (val, index) => { 
-                    _dates.push(...this.momentGetWeekDates( null, val )) 
-                })
-                this.updateDateRange(_dates)
-            },
-            onClickCalMonthSelect ( dateInView, event, value, params ) {
-                let _dates = []
-                event.map( (val, index) => {
-                    _dates.push(...this.momentGetMonthDates( null, val ))
-                })
-                this.updateDateRange(_dates)
-            },
-            onClickCalYearSelect ( dateInView, event, value, params ) {            
-                let _dates = []
-                event.map( (val, index) => {
-                    let _dStart = this.dateToISOStr(moment({year: val, month: 0, date: 1}))
-                    let _dEnd = this.dateToISOStr(moment({year: val, month: 11, date: 31}))
-                    _dates.push(_dStart)
-                    _dates.push(_dEnd)
-                })
-                this.updateDateRange(_dates.sort())
-            },
-            //** Combo handlers */
-            onClickFinanceYearSelected ( dateInView, event, value, params ) {
-                if (this.isLoaded) {
-                    this.clearSelection()
+                this.emitUpdate()
+                this.updateNumPickerVisible()
+                if (this.autoFocus) {
+                    this.autoFocusPicker()
                 }
             },
-            onClickFinanceQuarterSelected ( dateInView, event, value, params ) {
-                let _dates = []
-                let _d = this.validateDate(dateInView)
-                params.map( (year, index) => {
-                    let _yr = this.validateDate(year)
-                    event.map( (val, index) => {
-                        _dates.push(...this.momentGetQuarterDates( year, val ))
-                    })
-                })
-                this.updateDateRange( _dates.sort() )
-            },
-            onClickFinancePeriodSelected ( dateInView, event, value, params ) {
-                let _dates = []
-                let _d = this.validateDate(dateInView)
-                params.map( (year, index) => {
-                    let _yr = this.validateDate(year)
-                    event.map( (val, index) => {
-                        _dates.push(...this.momentGetPeriodDates( year, val ))
-                    })
-                })
-                this.updateDateRange( _dates.sort() )
-            },
-            /** Helpers */
-            getItemText (item) {
-                return item.text
-            },
-            getItemValue (item) {
-                return item.value
-            },
-            /** Builder functions */
-            weekNumbers (date) {
-                let result = []
-                let data = this.momentWeekNumbers(date)
-                for(let x=1;x<data.length;x++) {
-                    result.push({ text: `Week #${x} [${data[x].start.format('MMM Do')} - ${data[x].end.format('MMM Do')}]`, value: x})
-                }
-                return result
-            },
-            monthNames () {
-                return this.momentMonthShortNames().map( (val, index) => { return {text: val, value: index}} )
-            },
-            yearNumbers (date) {
-                return this.momentYearNumbers(date).map( (val, index) => { return {text: val, value: val}} )
-            },
-            periodList () {
-                return [
-                    {text: 'P1', value: 1},
-                    {text: 'P2', value: 2},
-                    {text: 'P3', value: 3},
-                    {text: 'P4', value: 4},
-                    {text: 'P5', value: 5},
-                    {text: 'P6', value: 6},
-                    {text: 'P7', value: 7},
-                    {text: 'P8', value: 8},
-                    {text: 'P9', value: 9},
-                    {text: 'P10', value: 10},
-                    {text: 'P11', value: 11},
-                    {text: 'P12', value: 12},
-                    {text: 'P13', value: 13},
-                ]
-            },
-            quarterList () {
-                return [
-                    {text: 'Q1', value: 1},
-                    {text: 'Q2', value: 2},
-                    {text: 'Q3', value: 3},
-                    {text: 'Q4', value: 4},
-                    {text: 'Current', value: 0},
-                    {text: 'Last', value: -1}
-                ]
-            },
-            /**  Utils */
+                      
+            /**
+             * Private Helper function
+             * 
+             * validateDate inspects the supplied date and attempts to 
+             * return a valid javascript Date object or null
+             * 
+             * @param  {Number | String | Date}     date    Date value to inspect
+             * @return {Date | null}                        Javascript Date object or `null`
+             * 
+             */
             validateDate (date) {
                 let _d = null
                 if (date && typeof date === 'number') {
@@ -795,148 +460,23 @@
                 }
                 return _d && typeof _d.toISOString === 'function' ? _d : null
             },
-            /** Date Functions -> move to mixin */
-            momentYearNumbers (date) {
-                let result = []
-                const currentYear = date ? date : this.dateConfig.pickerView1
-                let _date = this.validateDate(currentYear)
-                const maxYear = this.max ? parseInt(this.max, 10) : _date ? _date.getFullYear() + 10 : moment().year() + 10
-                const minYear = this.min ? parseInt(this.min, 10) : _date ? _date.getFullYear() - 10 : moment().year() - 10
-                for (let year = maxYear; year >= minYear; year--) {
-                    result.push(year)
-                }
-                return result.sort()
-            },
-            momentWeekNumbers (date) {                
-                let _d = this.validateDate(date)
-                let _dy = _d ? _d.getFullYear() : moment().year()
 
-                let _data = []
-                let _weeks = moment().weeksInYear([_dy])
-                _data[0] = {year: _dy}
-                for (let _x=1; _x<=_weeks; _x++) {
-                    let _wStart = moment([_dy]).week(_x).startOf('week')
-                    let _wEnd = moment([_dy]).week(_x).endOf('week').subtract(1, 'days')
-                    _data[_x] = {start: _wStart, end: _wEnd}
-                }
-                return _data
-            },
-            momentMonthNumbers (date) {
-                let _d = this.validateDate(date)
-                let _dy = _d ? _d.getFullYear() : moment().year()
-
-                let _data = []
-                _data[0] = {year: _dy}
-                for (let _x=0; _x<12; _x++) {
-                    let _wStart = moment([_dy]).month(_x).startOf('month')
-                    let _wEnd = moment([_dy]).month(_x).endOf('month').subtract(1, 'days')
-                    _data[_x] = {start: _wStart, end: _wEnd}
-                }
-
-                return _data
-            },
-            momentQuarterNumbers (year) {
-                let _year = parseInt(year) || moment().year()
-                let _data = []
-                _data[0] = {year: _year}
-                for (let _x=1; _x<=4; _x++) {
-                    let _wStart = moment([_year]).quarter(_x).startOf('quarter')
-                    let _wEnd = moment([_year]).quarter(_x).endOf('quarter').subtract(1, 'days')
-                    _data[_x] = {start: _wStart, end: _wEnd}
-                }
-
-                return _data
-            },
-            momentPeriodNumbers (year) {
-                let _year = parseInt(year) || moment().year()
-                let _data = []
-                _data[0] = {year: _year}
-                let _weeks = this.momentWeekNumbers( year )
-                let _pn = 0
-                for (let _x=1; _x<=52; _x += 4) {
-                    _pn++
-                    let _wStart = _pn === 1 ? _weeks[_x].start : this.dateToISOStr( moment(_weeks[_x].start).add(1,'days') )
-                    let _wEnd = this.dateToISOStr( moment(_weeks[_x+3].end).add(1,'days') )
-                    _data[_pn] = {start: _wStart, end: _wEnd}
-                }
-
-                return _data
-            },
-            momentMonthShortNames () {
-                return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMM')})
-            },
-            momentMonthLongNames () {
-                return Array.apply(0, Array(12)).map(function(_,i){return moment().month(i).format('MMMM')})
-            },
-            momentStartOf (opt, date) {
-                let _d = this.validateDate(date)  //returns null of validate date
-                let _date = _d ? _d : moment()
-                return moment(_date).startOf(opt)
-            },
-            momentEndOf (opt, date) {
-                let _d = this.validateDate(date)  //returns null or validate date
-                let _date = _d ? _d : moment()               
-                return moment(_date).endOf(opt)
-            },
-            dateStartPrevWeek (date) {
-                let _d = this.validateDate(date)
-                let _date = _d ? _d : moment()
-                let _dw = this.dateStartOfWeek(this.dateToISOStr(_date))
-                _dw.subtract(7, 'days')
-                return _dw
-            },
-            dateEndPrevWeek (date) {
-                let _d = this.dateEndOfWeek(this.dateToISOStr(date))
-                _d.subtract(7, 'days')
-                return _d
-            },
-            dateStartOfWeek (date) {
-                let _t = this.momentStartOf('week', date)
-                return _t
-            },
-            dateEndOfWeek (date) {
-                let _t = this.momentEndOf('week', date).subtract(1, 'days')
-                return _t
-            },
-            dateStartOfMonth (date) {
-                let _t = this.momentStartOf('month', date)
-                return _t
-            },
-            dateEndOfMonth (date) {
-                let _d = this.validateDate(date)
-                let _t = this.momentEndOf('month', _d.toISOString()).subtract(1,'days')
-                return _t
-            },
-            momentGetWeekDates (date, weekNumber) {
-                let _wn = parseInt(weekNumber) || 1
-                let _data = this.momentWeekNumbers(date)
-
-                return  [ this.dateToISOStr(_data[_wn].start), this.dateToISOStr(_data[_wn].end) ]             
-            },
-            momentGetMonthDates (date, monthNumber) {
-                let _mn = parseInt(monthNumber) || 0
-                let _data = this.momentMonthNumbers(date)
-
-                return [ this.dateToISOStr(_data[_mn].start), this.dateToISOStr(_data[_mn].end) ]
-            },
-            momentGetYearDates (date, yearNumber) {
-                let _yn = parseInt(yearNumber) || moment().year()
-                return [ this.momentStartOf('year', _yn), this.momentEndOf('year',_yn)]
-            },
-            momentGetQuarterDates (date, quarterNumber) {
-                let _qn = parseInt(quarterNumber) || 1
-                let _data = this.momentQuarterNumbers(date)
-
-                return [ this.dateToISOStr(_data[_qn].start), this.dateToISOStr(_data[_qn].end) ]
-            },
-            momentGetPeriodDates (date, periodNumber) {
-                let _pn = parseInt(periodNumber) || 1
-                let _data = this.momentPeriodNumbers(date)
-
-                return [ this.dateToISOStr(_data[_pn].start), this.dateToISOStr(_data[_pn].end) ]
-            },
-            // END OF MOMENT
+            /**
+             * Private Helper function
+             * 
+             * dateFromStr converts a string to a Javascript Date object with the
+             * ability to add and subtract days, months and years to the supplied 
+             * string date
+             *  
+             * @param  {String} strDate    A date expressed as a string having one of these
+             *                             formats: 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD'
+             * @param  {Number} deltaDay   [optional] Add or subtract a number of days
+             * @param  {Number} deltaMonth [optional] Add or subtract a number of months
+             * @param  {Number} deltaYear  [optional] Add or subtract a number of years
+             * @return {Date | null}       Javascript Date object or `null`
+             */
             dateFromStr (strDate, deltaDay = 0, deltaMonth = 0, deltaYear = 0) {
+                //console.log(`dateFromStr( ${strDate}, ${deltaDay}, ${deltaMonth}, ${deltaYear} )`)
                 if (typeof strDate === 'string') {
                     let yr  = parseInt(strDate.substring(0,4))
                     let mon = parseInt(strDate.substring(5,8))
@@ -944,19 +484,41 @@
 
                     let d = new Date(yr, mon-1, dt ? dt : 1)
 
-                    d.setMonth(d.getMonth()+deltaMonth, d.getDate()+deltaDay)
+                    if (deltaDay !== 0) {
+                        d.setDate(d.getDate()+deltaDay)
+                    }
+
+                    if (deltaMonth !== 0) {
+                        d.setMonth(d.getMonth()+deltaMonth)
+                    }
+
+                    if (deltaYear !== 0) {
+                        d.setFullYear(d.getFullYear()+deltaYear)
+                    }
 
                     return d
                 }
 
                 return null
             },
-            dateToStr (date, format) {
-                if (format && moment) {
-                    if (date !== undefined && typeof date.toISOString === 'function') {
-                        return moment(this.dateToISOStr(date)).format(format)
+
+            /**
+             * Private Helper function
+             * 
+             * dateToStr converts a Javascript Date object to a string taking into account
+             * the user's locale
+             * 
+             * @param  {Object}         date    Javascript Date object
+             * @param  {Array | String} format  [optional] A string with a BCP 47 language tag, or
+             *                                  array of such strings. See documenation 
+             * @return {String}                 Date formatted as a string as per format requested                 
+             */
+            dateToStr (date, format = null) {
+                if (format) {
+                    if (date !== undefined && typeof date.toLocaleDateString === 'function') {
+                        return date.toLocaleDateString(this.locale, format)
                     } else if (date !== undefined && typeof date === 'string') {
-                        return moment(date).format(format)
+                        return new Date(date).toLocaleDateString(this.locale, format)
                     }
                 } else {
                     if (date && typeof date.toISOString === 'function') {
@@ -967,6 +529,18 @@
                 }
                 return null
             },
+
+            /**
+             * Private Helper function
+             * 
+             * dateToISOStr converts a Date object to a string as specified by ISO format 8601
+             * 
+             * @param  {Object} date    Date object supporting a toISOString method such as the internal
+             *                          Javascript or moment.js Date objects 
+             * @param  {Number} len     [Defaults to 10] Number to limit the length of the resulting string
+             * @return {String | null}  Returns the first `len` charachters of the converted string or 
+             *                          `null` if the date object supplied is invalid
+             */
             dateToISOStr (date, len = 10) {
                 if (date && typeof date.toISOString === 'function') {
                     return date.toISOString().substr(0,len)
@@ -978,7 +552,20 @@
                         return null
                     }
                 }
+
+                return null
             },
+
+            /**
+             * Private Helper function
+             * 
+             * dateToMonthYear is a wrapper function around the Vuetify default date formatters
+             * 
+             * @param  {Object | String}    date    Date object supporting a toISOString method such as 
+             *                                      the internal Javascript or moment.js Date objects;
+             *                                      A date formated as YYYY-MM-DD
+             * @return {String | null}              Returns the date object formatted as a string or `null`
+             */
             dateToMonthYear (date) {
                 if (date && typeof date.toISOString === 'function') {
                     return this.formatters.titleMonthYear(date.toISOString().substr(0,10))      
@@ -987,20 +574,33 @@
                 }
                 return null          
             },
-            dateRangeToStr (chkIn,chkOut) {
-                let _chkIn = this.validateDate(chkIn)
-                let _chkOut = this.validateDate(chkOut)
+
+            /**
+             * Private Helper function
+             * 
+             * dateRangeToStr converts a set of dates to a hyphenated short-form localized date string
+             *  
+             * @param  {String} rangeStart  'YYYY-MM-DD' string representing the start date
+             * @param  {String} rangeEnd    'YYYY-MM-DD' string representing the end date
+             * @return {String}             Hyphenated combination of start and end dates formatted
+             *                              using month and day short forms rather than numeric value.
+             *                              Automatically adds the year if the start and end dates 
+             *                              span years 
+             */
+            dateRangeToStr (rangeStart, rangeEnd) {
+                let _rangeStart = this.validateDate(rangeStart)
+                let _rangeEnd = this.validateDate(rangeEnd)
                 let _currentYear = this.validateDate(this.dateConfig.pickerView1)
                 let _format = null
-                if ( (_chkIn.getFullYear() !== _chkOut.getFullYear()) || 
-                      _chkIn.getFullYear() !== _currentYear.getFullYear() || 
-                      _chkOut.getFullYear() !== _currentYear.getFullYear()) {
-                    _format = 'MMM-DD-YYYY'
+                if ( (_rangeStart.getFullYear() !== _rangeEnd.getFullYear()) || 
+                      _rangeStart.getFullYear() !== _currentYear.getFullYear() || 
+                      _rangeEnd.getFullYear() !== _currentYear.getFullYear()) {
+                    _format = {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'}
                 } else {
-                    _format = 'MMM-D'
+                    _format = {month: 'short', day: 'numeric', timeZone: 'UTC'}
                 }
-                const _cin = this.dateToStr(chkIn, _format)
-                const _cout = chkOut ? this.dateToStr(chkOut, _format) : chkOut
+                const _cin = this.dateToStr(rangeStart, _format)
+                const _cout = this.dateToStr(rangeEnd, _format)
 
                 return `${_cout 
                             ? _cin 
@@ -1012,12 +612,21 @@
                         }`
 
             },
-            emitResults () {
-                this.$emit('input', this.dateRange)
-            },
-            monthYearToStr (chkIn,chkOut) {
-                const _cin = this.dateToMonthYear(chkIn)
-                const _cout = this.dateToMonthYear(chkOut)
+
+            /**
+             * Private Helper function
+             * 
+             * monthYearToStr converts a set of dates to a hyphenated string utilizing
+             * Vuetify default date formatter
+             * 
+             * @param  {String | Object}    rangeStart  YYYY-MM-DD string or Date object
+             * @param  {String | Object}    rangeEnd    YYYY-MM-DD string or Date object
+             * @return {String}                         Hyphenated combination of start and
+             *                                          end dates
+             */
+            monthYearToStr (rangeStart,rangeEnd) {
+                const _cin = this.dateToMonthYear(rangeStart)
+                const _cout = this.dateToMonthYear(rangeEnd)
 
                 return `${_cout
                             ? _cin
@@ -1029,19 +638,82 @@
 
                         }`
             },
-            getMonth(date1) {
+
+            /**
+             * Private Helper function
+             * 
+             * getMonth returns the month numeric value from a date that could be a
+             * string, a number or a Date object
+             * 
+             * @param  {Any}    date    The date to inspect
+             * @return {Number | null}  Returns the numeric month or null
+             */
+            getMonth (date) {
                 let _d = null
-                if (typeof date1 === 'string') {
-                    _d = this.dateFromStr(date1)
+                if (typeof date === 'string') {
+                    _d = this.dateFromStr(date)
                 } else {
-                    _d = date1
+                    _d = date
                 }
 
-                if (!_d || typeof _d.getMonth !== 'function') return false
+                if (_d && typeof _d.getMonth === 'function') {
+                    return _d.getMonth()
+                }
 
-                return _d.getMonth()
+                return null
             },
-            monthCount(date) {
+
+            /**
+             * Private Helper function
+             * 
+             * getYears returns an array of numeric years from the provided
+             * dates.
+             * 
+             * @param {String | Array}  dates   Array of, or string date. Each
+             *                                  Array element can be a string or
+             *                                  Date object
+             * 
+             * @returns {Array}                 Array of numeric months 
+             */
+            getYears (dates) {
+                let _d = null
+                if (typeof dates === 'string') {
+                    _d = this.validateDate(dates)
+                    if (typeof _d.getFullYear === 'function') {
+                        return [_d.getFullYear()]
+                    }
+                }
+
+                if (Array.isArray(dates)) {
+                    let _years = []
+                    dates.forEach( (date) => {
+                        _d = this.validateDate(date)
+                        if (typeof _d.getFullYear === 'function') {
+                            _years.push(_d.getFullYear())
+                        }
+                    })
+
+                    return _years
+                }
+
+                return []
+            },
+
+            /**
+             * Private Helper function
+             * 
+             * monthCount counts the number of dates in our selection that correspond 
+             * to the given date
+             * 
+             * @param  {String | Object} date  Date object or string representation of a date
+             *                                 String formats supported are 'YYYY', 'YYYY-MM',
+             *                                 'YYYY-MM-DD'. Time notation can be appended to the
+             *                                 string without any effect. 
+             * @return {Number | null}         Returns the number of times the given date's month
+             *                                 was found in the user's current selection or `null`
+             *                                 if the provided date was invalid               
+             */
+            monthCount (date) {
                 let _month = -1
 
                 if (date && typeof date === 'string') {
@@ -1056,197 +728,298 @@
                 for(let i=0; i<this.dateRange.length; i++) {
                     if(this.getMonth(this.dateFromStr(this.dateRange[i])) === _month) _mcount++
                 }
-                return _mcount
+                return _mcount === -1 ? null : _mcount
             },
-            deltaDate(date1, date2, callback = null) {
-                let _old = this.dateFromStr(date1).getTime()
-                let _new = this.dateFromStr(date2).getTime()
+
+            /**
+             * Private Helper function
+             * 
+             * deltaDate accepts two dates of any type, converts them to Date objects and executes
+             * a call back function passing the Date objects as parameters
+             * 
+             * @param  {Any}        date1    A Date object, a string or numeric representation of a date
+             * @param  {Any}        date2    A Date object, a string or numeric representation of a date
+             * @param  {Function} callback   A function that will be executed using the converted dates
+             *                               as parameters
+             * @return {Numeric}             Returns the result of the callback, if enabled, or the time 
+             *                               difference
+             */
+            deltaDate (date1, date2, callback = null) {
+                if (Array.isArray(date1)) {
+                    date1 = date1[0]
+                }
+                if (Array.isArray(date2)) {
+                    date2 = date2[0]
+                }
+
+                let _first = this.validateDate(date1).setHours(0,0,0,0)
+                let _second = this.validateDate(date2).setHours(0,0,0,0)
                 
                 if (callback && typeof callback === 'function') {
-                    return callback(_old, _new)
-                }               
+                    return callback(_first, _second)
+                }
+                
+                let _delta = (_second - _first)
+                console.log('Delta is: ', _delta)
+                return _delta
             },
-            getSelectionByMonth(date) {
+
+            /**
+             * Private Helper function
+             * 
+             * getSelectionByMonth parses the current user selection and returns the index of 
+             * the first date that match the provided date
+             * 
+             * @param  {String} date Date to search for
+             * @return {Numeric}     Index of date found, or -1
+             */
+            getSelectionByMonth (date) {
                 return this.dateRange.findIndex(element => element.includes(date))
             },
-            getPickerTitle(date, index) {
+
+            /**
+             * Getter function
+             * 
+             * getPickerTitle generates the title for a picker identified by the index parameter. 
+             * The function inspects the current user selection compared to the date currently shown by
+             * the picker to compose an appropriate title for the picker.
+             *  
+             * @param  {Numeric} index Index of the picker 
+             * @return {String}        The picker's title
+             */
+            getPickerTitle (index) {
                 if (this.monthCount(this.dateConfig[`pickerView${index}`]) === 1) {
                     let _item = this.getSelectionByMonth(this.dateConfig[`pickerView${index}`])
-                    return _item != -1 
+                    return _item !== -1 
                                ? this.defaultTitleDateFormatter(this.dateRange[_item]) //bypass multipleDateFormatter
                                : ' - '
                 } else if (this.monthCount(this.dateConfig[`pickerView${index}`]) === 2) {
                     return this.monthYearToStr(this.dateRange[0], this.dateRange[1])
                 } else {
-                    return '-'
+                    return ''
                 }                 
             },
-            getPickerMin(index) {
-                return this.dateConfig.min[index] || null
-            },
-            getPickerMax(index) {
-                return this.dateConfig.max[index] || null
-            },
-            getPickerView(index) {
-                return this.dateConfig.view[index] || null
-            },
-            getPickerColor(index) {
-                return this.color[index % this.color.length]
-            },
-            getSiblingData (...params) {
-                let results = []
 
-                let [data, fields] = params
-                
-                if (data.hasOwnProperty('options') && Array.isArray(data.options)) {
-                    data.options.forEach( (item) => {
-                
-                            if (Array.isArray(fields)) {
-                                fields.split(',').map( (f) => {     
-                                    if ( item.ref === f) {
-                                        results.push(item.value)
-                                    }
-                                })
-                            } else if (typeof fields === 'string') {
-                                if ( item.ref === fields ) {
-                                    results = [item.value]
+            /**
+             * Getter function
+             * 
+             * getPickerColor gets a color for a picker by alternating color selection from 
+             * a list of colors based on provided index and lenght of color array 
+             * (example: alternating row color in a table)
+             * 
+             * @param  {Numeric} index          The index of the object receiving the color
+             * @param  {Array}   colorArray     [Optional] The array of colors to choose from. 
+             *                                  By default uses the headerColor property.
+             *                                  ** The array should contain a list of color values
+             *                                  as strings or numerics but the data return is not
+             *                                  validated.
+             * @return {String|Numeric}         The array element
+             */
+            getPickerColor (index, colorArray = this.headerColor) {
+                if (Array.isArray(colorArray) && colorArray.length !== 0) {
+                    return colorArray[index % colorArray.length]
+                }
+
+                return undefined
+            },
+
+            /**
+             * In support of the autoHide feature; when enabled and the user's selection
+             * is within a singal month, the date-range picker component will hide the
+             * unused adjacent pickers 
+             * 
+             * updateNumPickerVisible updates the `numPickerVisible` data property
+             * to reflect the number of date pickers visible on screen.
+             *  
+             * @return {Numeric | Null}     Returns the number of pickers displayed 
+             *                              or null if auto-hide is disabled
+             */
+            updateNumPickerVisible () {
+                if (this.autoHide) {
+
+                    let _count = -1
+
+                    if (_count === -1 && this.dateRange.length !== 2) {
+                        _count = this.numPickers
+                    }
+                    if (_count === -1 && this.getMonth(this.dateRange[0]) !== this.getMonth(this.dateRange[1])) {
+                        _count = this.numPickers
+                    }
+
+                    if (_count === -1)
+                    {                
+                        for (let _p=1; _p<=this.numPickers; _p++) {
+                            if (
+                                this.getMonth(this.dateRange[0]) === this.getMonth(this.dateConfig[`pickerView${_p}`]) 
+                            ) {
+                                if (_count === -1) {
+                                    _count = 1
+                                } else {
+                                    _count++
                                 }
-                            }                    
-                
-                    })
-                
-                }
-
-                return results
-
-            },
-            isAnyPickerVisible() {
-                let _count = -1
-                if (this.dateRange.length !== 2) {
-                    _count = this.numPickers
-                }
-                if (this.getMonth(this.dateRange[0]) !== this.getMonth(this.dateRange[1])) {
-                    _count = this.numPickers
-                }
-
-                if (_count === -1)
-                {                
-                    for (let _p=1; _p<=this.numPickers; _p++) {
-                        if (
-                            this.getMonth(this.dateRange[0]) === this.getMonth(this.dateConfig[`pickerView${_p}`]) 
-                        ) {
-                            if (_count === -1) {
-                                _count = 1
-                            } else {
-                                _count++
                             }
                         }
                     }
+                    
+                    if (!_count === this.numPickers) {
+                        this.numPickersVisible = _count
+                    }
+
+                    return _count
                 }
-                this.numPickersVisible = _count
-                return _count
+
+                return null
             },
-            isPickerVisible(index) {
+
+            /**
+             * Private Helper function; in support of the auto-hide functionality
+             * 
+             * isPickerVisible returns a boolean value indicating if the picker specified
+             * by an index is currently visible
+             * 
+             * @param  {Numeric}  index The ID of the picker
+             * @return {Boolean}        Picker visiblity
+             */
+            isPickerVisible (index) {
                 return this.autoHide && this.dateRange.length === 2
                         ? this.getMonth(this.dateRange[0]) !== this.getMonth(this.dateRange[1])
                             ? true
-                            : this.isAnyPickerVisible() !== -1 
+                            : this.updateNumPickerVisible() !== -1 
                                 ? this.getMonth(this.dateRange[0]) === this.getMonth(this.dateConfig[`pickerView${index}`])
                                 : true
                         : true
             },
-            setHoverLink(value) {
+
+            /**
+             * Setter function; event handler
+             * 
+             * setHoverLink is executed when the `hoverLink` event is received.
+             * Its purpose is to propage the hover location to all pickers.
+             * 
+             * @param  {String} value The date currently hovered
+             * @return {void} 
+             */
+            setHoverLink (value) {
                 this.dateConfig.hoverLink = value
             },
-            eventsEx(date, index) {
+
+            /**
+             * Event handler/propagator
+             * 
+             * onInputChange is invoked when the 'change' event is received from 
+             * any of the child date pickers. The event bubble's up to the panent.
+             * 
+             * @param  {String[]} dates Array of ISO string dates YYYY-MM-DD
+             * @param  {Integer}  index ID of picker sending the event
+             * @return {void}
+             */
+            onInputChange (dates, index) {
+                this.$emit('change', dates)
+            },
+
+            /**
+             * Event handler/propagator
+             * 
+             * onDateClicked is invoked when the 'click' event is received from any
+             * of the child date pickers. The event bubble's up to the parent.
+             * 
+             * @param  {String}  date  The date as a 'YYYY-MM-DD' formatted string
+             * @param  {Numeric} index The ID of the date picker
+             * @return {void}     
+             */
+            onDateClicked (date, index) {
+                this.updateNumPickerVisible()
+                this.$emit('click', date)
+                if (this.liveUpdate) {
+                    this.emitUpdate()
+                }
+                this.dateRange.sort()
+            },
+
+            /**
+             * Event handler
+             * 
+             * onHeaderClicked is invoked when a picker's type is changed. 
+             * 
+             * @param   {String}    pickerType  The current type; 'DATE', 'MONTH' or 'YEAR'
+             * @param   {Numeric}   index       The ID of the date picker
+             */
+            onHeaderClicked (pickerType, index) {
+                this.dateConfig[`pickerType${index}`] = pickerType.toLowerCase()
+            },
+
+            /**
+             * Event handler/propagator
+             * 
+             * onPickerUpdate is invoked when any of the child date pickers update their 
+             * state. A state change can comprise a change in month or year.  This event
+             * bubble's up to the parent.
+             * 
+             * Internally, this event is used to update non-primary child date pickers so
+             * that they always follow the primary date picker.
+             * 
+             * @param  {String}  date  The date as a 'YYYY-MM' formatted string
+             * @param  {Numeric} index The ID of the child picker
+             * @return {void}
+             */
+            onPickerUpdate (date, index) {
                 if (index === 1) {
-                    const [,, day] = date.split('-')
-                    if ([12,27,28].includes(parseInt(day,10))) return true
-                    return false
-                } else if (index === 2) {
-                    const [,,day] = date.split('-')
-                    if ([12,27,28].includes(parseInt(day,10))) return ['red', '#00f']
-                    return false
-                }
-            },
-            onInputChange(dates, index) {
-                this.$emit('update:pickerDate', {date: dates, key: index})
-            },
-            onDateClicked(date, index) {
-                this.dateConfig.currentDate[index] = date
-                this.isAnyPickerVisible()
-            },
-            onPickerUpdate(date, index) {
-                let _toDate = this.dateFromStr(date)    
-                let _fromDate = this.dateFromStr(this.dateConfig[`pickerView${index}`])
-                let _diff = _toDate.getTime() - _fromDate.getTime()
-                let _delta = 0
-                if (_diff != 0) {
-                    _delta = _diff > 0 ? 1 : -1
-                    this.deltaOrigin = this.deltaOrigin + _delta
-                }
+                    let _toDate = this.dateFromStr(date)    
+                    let _fromDate = this.dateFromStr(this.dateConfig[`pickerView${index}`])
+                    let _toArray = date.split('-')
+                    let _fromArray = this.dateConfig[`pickerView${index}`].split('-')
+                    let _diffYear = parseInt(_toArray[0],10) - parseInt(_fromArray[0],10)
+                    let _diffMonth = parseInt(_toArray[1],10) - parseInt(_fromArray[1],10)
+                  
+                    this.dateConfig[`pickerView${index}`] = this.dateToISOStr(_toDate,7)
                 
-                this.dateConfig[`pickerView${index}`] = this.dateToISOStr(date,7)
-               
-                let _nd = null
-                for (let x=index+1; x<=this.numPickers; x++) {
-                    _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,_delta).toISOString()
-                    this.dateConfig[`pickerView${x}`] = _nd.substr(0,7)
-                }
-
-            },
-            showHidePanel(panel) {
-                panel.show = !panel.show
-                this.panel = panel
-
-                this.pickerOptions.forEach( (option) => {
-                    if (option.title !== panel.title) {
-                        option.visible = panel.show ? false : true
+                    let _nd = null
+                    for (let x=index+1; x<=this.numPickers; x++) {
+                        _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,_diffMonth, _diffYear).toISOString()
+                        this.dateConfig[`pickerView${x}`] = _nd.substr(0,7)
                     }
-                })
+                }
             },
-            onAction( ...attributes ) { 
-                
-                let _strDate = this.dateConfig.pickerView1
-                let _d = this.validateDate(_strDate)
-                let _fn = null
 
-                var [event, fnName, value, parameters] = attributes
-                _fn = this[fnName]
-                if (_fn) {
-                    this.setCurrentAction(fnName)
-                    _fn(_d, event, value, parameters)
-                    this.currentAction = null
-                }
-           
+            /** ============================== Events ============================== */
+                        
+            /**
+             * Generate input event providing final date range 
+             * selection to parent handler
+             * 
+             * @return void
+             */
+            emitResults () {
+                this.$emit('input', this.dateRange)
             },
-            buildSelectionList(fnName) {
-                let _fn = this[fnName]
-                if ( _fn ) return _fn()
-            }
-        },
-        watch: {
-            dateRange: {
-                handler(val, prev) {
-                    if (!this.multiRange && this.dateRange.length > 2) {
-                        this.dateRange.splice(1,1)
-                    }
-                },
-                deep: true 
+
+            emitUpdate () {
+                this.$emit('update', this.dateRange)
             },
-            isOpen: {
-                handler(val) {
-                    this.isAnyPickerVisible()
-                }
+
+            emitWarning (msg) {
+                this.$emit('warning', msg)
+            },
+
+            emitInfo (msg) {
+                this.$emit('info', msg)
+            },
+
+            emitError (msg) {
+                this.$emit('error', msg)
             }
+
         },
         mounted() {
-            this.dateConfig.visiblePickers = this.$vuetify.breakpoint.xsOnly ? 1 : this.numPickers
+            //override picker quantity on small displays
+            this.dateConfig.visiblePickers = this.numPickers
+
+            this.maxCardWidth = this.maxWidth
     
             for (let i=1; i<=this.dateConfig.visiblePickers; i++) {
                 let _d = null
                 //user supplied a start date
-                if (this.startDate) {
+                if (this.startDate && this.allowBackInTime) {
                     if (typeof this.startDate === 'string') {
                         _d = this.dateFromStr(this.startDate)
                     } else {
@@ -1259,16 +1032,21 @@
                     _d = new Date()
                 }
 
+                //bind the picker mode for clearing
+                this.$set(this.dateConfig, `pickerType${i}`, 'date')
+
                 //setup a min if we are not allowed to go back in time
                 if (!this.allowBackInTime) {
-                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 7))
+                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 10))
                 }
+
                 //setup the picker view date for this index
                 _d.setMonth(_d.getMonth()+i-1)                   
                 this.$set(this.dateConfig, `pickerView${i}`, this.dateToISOStr( _d, 7 ) )
                 
-                this.isLoaded = true
             }
+
+            this.onResize()
         }
     };
 </script>
