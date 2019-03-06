@@ -1,4 +1,6 @@
-
+/**
+ * Borrowed from vuetifyjs until component is ported to TypeScript (if ever)
+ */
     function createMessage(message, vm, parent) {
         if (parent) {
             vm = {
@@ -75,22 +77,21 @@
         }
     }
 
+    export function consoleInfo(message, vm, parent) {
+        var newMessage = createMessage(message, vm, parent);
+        newMessage != null && console.info(newMessage);
+    }
 
-        export function consoleInfo(message, vm, parent) {
-            var newMessage = createMessage(message, vm, parent);
-            newMessage != null && console.info(newMessage);
-        }
+    export function consoleWarn(message, vm, parent) {
+        var newMessage = createMessage(message, vm, parent);
+        newMessage != null && console.warn(newMessage);
+    }
     
-        export function consoleWarn(message, vm, parent) {
-            var newMessage = createMessage(message, vm, parent);
-            newMessage != null && console.warn(newMessage);
-        }
-        
-        export function consoleError(message, vm, parent) {
-            var newMessage = createMessage(message, vm, parent);
-            newMessage != null && console.error(newMessage);
-        }
-    
-        export function deprecate(original, replacement, vm, parent) {
-            consoleWarn("'" + original + "' is deprecated, use '" + replacement + "' instead", vm, parent);
-        }
+    export function consoleError(message, vm, parent) {
+        var newMessage = createMessage(message, vm, parent);
+        newMessage != null && console.error(newMessage);
+    }
+
+    export function deprecate(original, replacement, vm, parent) {
+        consoleWarn("'" + original + "' is deprecated, use '" + replacement + "' instead", vm, parent);
+    }

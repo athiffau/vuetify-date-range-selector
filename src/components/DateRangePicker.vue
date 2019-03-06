@@ -20,7 +20,8 @@
                         :first-day-of-week="firstDayOfWeek"
                         :header-color="getPickerColor(index)"
                         :header-date-format="headerDateFormat"
-                        :hover-link="dateConfig.hoverLink"
+                        :hide-disabled="hideDisabled"
+                        :hover-link="hovering"
                         :key="index"
                         :light="light"
                         :locale="locale"
@@ -77,15 +78,22 @@
         name: 'v-date-range-picker',
         extends: VDatePicker,
         data: () => ({
-            maxCardWidth: undefined,
             dateRange: [],
             dateConfig: {
-                hoverLink: null,
                 pickerView1: null,
-                visiblePickers: 0
+                visiblePickers: 0,
+                lastClick: null
             },
             numPickersVisible: 0,
-            pickerOptionsShow: false
+            maxCardWidth: undefined,
+            pickerOptionsShow: false,
+            lmode: '',
+            lpickerDate: null,
+            parentConfig: {
+                mode: 'fuzzy',
+                pickerDate: '1899-01',
+                locale: 'en-US'
+            }
         }),
         props: {
             allowBackInTime: {
@@ -153,6 +161,10 @@
                 type: Array,
                 default: null
             },
+            resetViewOnClear: {
+                type: Boolean,
+                default: true
+            },
             solo: {
                 type: Boolean,
                 default: false
@@ -165,15 +177,59 @@
         computed: {
             pickerView() {
                 return this.dateConfig.pickerView1
+            },
+            userLocale() {
+                if (this.locale !== '') {
+                    return this.locale
+                } else {
+                    return 'en-US'
+                }
+            },
+            pickerMode() {
+                if (this.mode !== '') {
+                    return this.mode
+                } else {
+                    return 'fuzzy'
+                }
+            },
+            computedPickerDate() {
+                if (this.pickerDate !== '') {
+                    return this.pickerDate
+                } else {
+                    return null
+                }
             }
         },
         provide () {
             return {
-                locale: this.locale,
-                mode: this.mode           
+                pickerConfig: this.parentConfig
             }
         },
         watch: {
+            pickerMode: {
+                handler(val,prev) {
+                    if (val !== prev) {
+                        this.parentConfig.mode = this.pickerMode
+                    }
+                },
+                immediate: true
+            },
+            computedPickerDate: {
+                handler(val,prev) {
+                    if (val !== prev) {
+                        this.parentConfig.pickerDate = this.computedPickerDate
+                    }
+                },
+                immediate: true
+            },
+            userLocale: {
+                handler(val,prev) {
+                    if (val !== prev) {
+                        this.parentConfig.locale = this.userLocale
+                    }
+                },
+                immediate: true
+            },
             pickerView: {
                 handler(val,prev) {
                     if (this.tableDate !== val) {
@@ -203,17 +259,13 @@
                     if (Array.isArray(val)) {
                         if (!val.length) {
                             this.dateRange = val
-                            this.autoFocusPicker(this.now)
+                            if (this.resetViewOnClear) {
+                                this.autoFocusPicker( this.getStartDate() || this.now)
+                            }
                         } else {
-                            if (!val.every((value,index) => value === this.dateRange[index])) {
-                                if (!this.allowBackInTime && this.deltaDate(this.now, val) < 0 ) {
-                                    this.processMode(val)
-                                } else {
-                                    this.dateRange = val
-                                    if (this.autoFocus) {
-                                        this.autoFocusPicker()
-                                    }
-                                }
+                            this.dateRange = val
+                            if (this.autoFocus) {
+                                this.autoFocusPicker()
                             }
                         }
                     }
@@ -244,21 +296,29 @@
                     let _date = this.validateDate(date)
                     this.onPickerUpdate(_date.toISOString(), 1)
                 } else {
-                    // let _years = this.getYears(this.dateRange)
-                    // console.log('years', _years)
-                    // if (_years.length > 0) {
-                    //     let _pickerDate = this.dateConfig['pickerView1']
-                    //     console.log('pickerDAte', _pickerDate)
-                    //     let _pd = this.getYears(_pickerDate)
-                    //     console.log('Picker date year: ', _pd)
-                    //     if (_pd.length > 0) {
-                    //         if ( _years.findIndex(year => year === _pd[0] ) === -1) {
-                    //             this.onPickerUpdate(this.dateRange[0], 1)
-                    //         }
-                    //     }
-                    // }
                     this.onPickerUpdate(this.dateRange[0], 1)
                 }
+            },
+
+            /**
+             * In support of autoFocus property. 
+             *
+             * getStartDate returns the earliest valid date or null.
+             *
+             * For a date to be deemed valid the following conditions must be met:
+             * (a) If the flag `allowBackInTime` is not set, the next rule applies
+             * (b) If a start date was set, the date must be greater 
+             * 
+             * @return {String | null}  Returns the pre-defined start date as a string or null
+             */
+            getStartDate () {
+               if (this.startDate !== null) {
+                   if (this.deltaDate(this.now, this.startDate) < 0 && !this.allowBackInTime) {
+                       return null
+                   }
+               } 
+
+               return this.startDate
             },
             
             /**
@@ -282,7 +342,8 @@
             resetPickerModes () {
                 for (let _x=1; _x<=this.numPickers; _x++) {
                     let pickerName = `pickerView${_x}`
-                    if (this.dateConfig[pickerName] !== 'date') {
+                    let pickerType = `pickerType${_x}`
+                    if (this.dateConfig[pickerType] !== 'date') {
                         let picker = Array.isArray(this.$refs[pickerName]) 
                                 ? this.$refs[pickerName][0]
                                 : this.$refs[pickerName]
@@ -385,30 +446,69 @@
 
             /** ==============================  Helpers  ============================== */
 
+            /**
+             * In support of locking the range selector to a minimum date
+             * 
+             * processMode() is called when a date requested is found
+             * to be invalid. Validity is based on the following settings:
+             * - startDate
+             * - allowBackInTime
+             * - currentDate
+             * 
+             * This function is typically called as a result of failing a trivial 
+             * rejection test on an attempt to set a date range.
+             * 
+             * Three modes of error resolution are supported:
+             * 1. strict:   date range is reset if any of the trivial reject rules fail
+             * 2. fuzzy:    works in conjuction with an MRU where the last user selection is
+             *              tested against the current date. If the date falls within it will 
+             *              be allowed or else [only] the last selection will be rejected
+             * 3. lazy:     the date range as per the last user selection will be tested against
+             *              the current date. if the date falls within it will be allowed or else
+             *              rejected. 
+             * 
+             * @param  {String[] || string} dates String or array of strings each formated as YYYY-MM-DD
+             * @return {void}       
+             */
             processMode (dates) {
-                if (this.mode === 'strict') {
-                    this.emitError('Date range is not allowed.')
-                } else if (this.mode === 'lazy') {
-                    if (this.todayIsInRange(dates)) {
-                        this.updateDateRange(dates)
-                        this.emitWarning('Date range includes past dates.')
-                    } else {
+                if (Object.keys(this.$slots).length !==0) {
+                    if (this.mode === 'strict') {
                         this.emitError('Date range is not allowed.')
+                    } else if (this.mode === 'lazy') {
+                        if (this.todayIsInRange(dates)) {
+                            this.updateDateRange(dates)
+                            this.emitWarning('Last selection could not be process. Date is in the past.')
+                        } else {
+                            this.emitError('Date range is not allowed.')
+                        }
+                    } else if (this.mode === 'fuzzy') {
+                        this.updateDateRange(dates)
+                        this.emitInfo('Date range includes past dates.')
                     }
-                } else if (this.mode === 'fuzzy') {
+                } else {
                     this.updateDateRange(dates)
-                    this.emitInfo('Last selection could not be process. Date is in the past.')
                 }
             },
 
+            /**
+             * Private helper function
+             * 
+             * todayIsInRange inspects the date range supplied to determin if today's date falls within
+             * 
+             * @param  {String[]} dates Array of strings representing a date, each formatted as YYYY-MM-DD
+             * @return {Boolean}        Returns true if the current day falls within the range supplied
+             */
             todayIsInRange ( dates = null ) {
                 let _now = this.dateToISOStr(this.now)
                 if (Array.isArray(dates) && dates.length >= 2) {
-                    //TODO: support multi-rante
-                    if (dates.length === 2) {
-                        return this.deltaDate(dates[0],_now) > 0 && this.deltaDate(_now, dates[1]) > 0
+                    
+                    if (this.multiRange) {
+                        //TODO: support multi-range
+                    } else {
+                        return this.deltaDate(dates[0],_now) > 0 && this.deltaDate(_now, dates[dates.length-1]) > 0
                     }
                 }
+                return false
             },
 
             /**
@@ -422,12 +522,12 @@
              */
             updateDateRange (dates) {
                 if (!Array.isArray(dates)) return
-                this.clearSelection()  
+                //this.clearSelection()  
                 if (this.multiRange) {
                     this.dateRange.push(dates)
                 } else {
-                    this.dateRange.push(dates[0])
-                    this.dateRange.push(dates[dates.length - 1])
+                    let _dates = [dates[0], dates[dates.length - 1]]
+                    this.dateRange = _dates
                 }
                 this.emitUpdate()
                 this.updateNumPickerVisible()
@@ -599,7 +699,7 @@
                 } else {
                     _format = {month: 'short', day: 'numeric', timeZone: 'UTC'}
                 }
-                const _cin = this.dateToStr(rangeStart, _format)
+                const _cin = this.$vuetify.lang.current === 'en' ? this.dateToStr(rangeStart, _format) : rangeStart.getDate()
                 const _cout = this.dateToStr(rangeEnd, _format)
 
                 return `${_cout 
@@ -625,7 +725,7 @@
              *                                          end dates
              */
             monthYearToStr (rangeStart,rangeEnd) {
-                const _cin = this.dateToMonthYear(rangeStart)
+                const _cin = this.getMonth(rangeStart) === this.getMonth(rangeEnd) ? this.getDay(rangeStart) : this.dateToMonthYear(rangeStart)
                 const _cout = this.dateToMonthYear(rangeEnd)
 
                 return `${_cout
@@ -637,6 +737,27 @@
                                 : ''
 
                         }`
+            },
+
+            /**
+             * Private Helper function
+             * 
+             * getDay returns the day number from the provided date
+             * 
+             * @param  {Object | String} date Javascript Date object or string fromatted as YYYY-MM-DD
+             * @return {Numeric}              Returns the day component from the date
+             */
+            getDay (date) {
+                let _d = null
+                if (typeof date === 'string') {
+                    _d = this.dateFromStr(date)
+                } else {
+                    _d = date
+                }
+
+                if (_d && typeof _d.getDate === 'function') {
+                    return _d.getDate()
+                }
             },
 
             /**
@@ -760,7 +881,6 @@
                 }
                 
                 let _delta = (_second - _first)
-                console.log('Delta is: ', _delta)
                 return _delta
             },
 
@@ -788,6 +908,7 @@
              * @return {String}        The picker's title
              */
             getPickerTitle (index) {
+                //console.log('getPickerTitle()')
                 if (this.monthCount(this.dateConfig[`pickerView${index}`]) === 1) {
                     let _item = this.getSelectionByMonth(this.dateConfig[`pickerView${index}`])
                     return _item !== -1 
@@ -900,7 +1021,7 @@
              * @return {void} 
              */
             setHoverLink (value) {
-                this.dateConfig.hoverLink = value
+                this.hovering = value
             },
 
             /**
@@ -923,6 +1044,10 @@
              * onDateClicked is invoked when the 'click' event is received from any
              * of the child date pickers. The event bubble's up to the parent.
              * 
+             * Usability is controlled via this click handler. The goal is to offer
+             * means of extending a selected range in a logical fashion following these
+             * rules:
+             * 
              * @param  {String}  date  The date as a 'YYYY-MM-DD' formatted string
              * @param  {Numeric} index The ID of the date picker
              * @return {void}     
@@ -930,10 +1055,44 @@
             onDateClicked (date, index) {
                 this.updateNumPickerVisible()
                 this.$emit('click', date)
+
+                if (this.dateRange.length > 2) {
+                    let _lastWasStart = this.dateConfig.lastClick === this.dateRange[0]
+                    let _lastWasEnd = this.dateConfig.lastClick === this.dateRange[1]
+                    let _clickBeforeStart = this.deltaDate(this.dateRange[0], this.dateRange[2]) < 0
+                    let _clickAfterEnd = this.deltaDate(this.dateRange[1], this.dateRange[2]) > 0
+
+                    // console.log(this.dateRange)
+                    // console.log(`Last click was Start (${this.dateConfig.lastClick}, ${this.dateRange[0]}): `, _lastWasStart)
+                    // console.log(`Last click was End: (${this.dateConfig.lastClick},${this.dateRange[0]}) `, _lastWasEnd)
+                    // console.log('Before start: ', _clickBeforeStart)
+                    // console.log('After end: ', _clickAfterEnd)
+
+                    
+                    if (_clickBeforeStart) {
+                        this.dateRange.splice(0,1)
+                    } 
+                    else if (_clickAfterEnd) {
+                        this.dateRange.splice(1,1)
+                    }
+                    //rule 1 - if the last click was the range start, adjust the range-start
+                    else if (_lastWasStart) {
+                        this.dateRange.splice(0,1)
+                    }
+                    //rule 2 - if the last selection is less than the range start, adjust the range-start 
+                    // else if (this.deltaDate(this.dateRange[0], this.dateRange[2]) < 0) {
+                    //     this.dateRange.splice(0,1)
+                    // } 
+                    //rule 3 - if rule 1 and rule 2 are not applicable, adjust the range-end
+                    else {
+                        this.dateRange.splice(1,1)
+                    }
+                }
                 if (this.liveUpdate) {
                     this.emitUpdate()
                 }
                 this.dateRange.sort()
+                this.dateConfig.lastClick = date
             },
 
             /**
@@ -963,8 +1122,10 @@
              * @return {void}
              */
             onPickerUpdate (date, index) {
+                //console.log(`DateRangePicker.onPickerUpdate ( ${date}, ${index} )`)
                 if (index === 1) {
-                    let _toDate = this.dateFromStr(date)    
+                    let _toDate = this.dateFromStr(date)
+                    //console.log('toDate = ', _toDate)    
                     let _fromDate = this.dateFromStr(this.dateConfig[`pickerView${index}`])
                     let _toArray = date.split('-')
                     let _fromArray = this.dateConfig[`pickerView${index}`].split('-')
@@ -993,18 +1154,42 @@
                 this.$emit('input', this.dateRange)
             },
 
+            /**
+             * Generate update event providing final date range
+             * selection to parent
+             * 
+             * @return {void}
+             */
             emitUpdate () {
                 this.$emit('update', this.dateRange)
             },
 
+            /**
+             * Generate a warning event 
+             * 
+             * @param  {String} msg Warning message to bubble up to parent
+             * @return {void}
+             */
             emitWarning (msg) {
                 this.$emit('warning', msg)
             },
 
+            /**
+             * Generate an info event
+             * 
+             * @param  {String} msg Information message to bubble up to parent
+             * @return {void}
+             */
             emitInfo (msg) {
                 this.$emit('info', msg)
             },
 
+            /**
+             * Generate an error event
+             * 
+             * @param  {String} msg Error message to bubble up to parent
+             * @return {void}
+             */
             emitError (msg) {
                 this.$emit('error', msg)
             }
@@ -1050,34 +1235,3 @@
         }
     };
 </script>
-
-<style>
-html {
-  overflow-y: auto;
-}  
-</style>
-
-<style lang="styl">   
-.v-btn 
-  &&--range
-    border-radius: unset
-    &:before
-      border-radius: unset 
-
-  &&--range-hover
-    background-color: black 
-
-  &&--range-start
-    border-top-left-radius: 5px
-    border-bottom-left-radius: 5px
-    &:before
-      border-top-left-radius: 5px
-      border-bottom-left-radius: 5px
-
-  &&--range-end
-    border-top-right-radius: 5px
-    border-bottom-right-radius: 5px
-    &:before
-      border-top-right-radius: 5px
-      border-bottom-right-radius: 5px
-</style>

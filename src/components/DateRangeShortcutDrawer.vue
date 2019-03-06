@@ -17,7 +17,7 @@
                         </v-list-tile-avatar>
 
                         <v-list-tile-content>
-                            <v-list-tile-title>Picker Options</v-list-tile-title>
+                            <v-list-tile-title>{{ $vuetify.t('$vuetify.dateRangeShortcuts.drawerTitle') }}</v-list-tile-title>
                         </v-list-tile-content>
 
                         <v-list-tile-action>
@@ -38,12 +38,47 @@
                         no-action
                     >
                         <v-list-tile slot="activator">
-                            <v-list-tile-title>{{ option.title }}</v-list-tile-title>
+                            <v-list-tile-title>{{ $vuetify.t(option.title) }}</v-list-tile-title>
                         </v-list-tile>
 
                         <v-list-tile-content>
-                            <v-layout align-center justify-start column fill-height>
-                                <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="btnGroup">
+                            <v-layout align-center justify-start column fill-height>                                
+                               
+                                <template v-if="option.type === 'group'">
+                                    <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="btnGroup">
+                                        <template v-for="(compo,index) in option.options">
+                                            <v-layout v-if="(allowBackInTime || evaluate(compo.if))" row fill-height class="mx-3 py-1" :key="index"> 
+                                                <component
+                                                    block
+                                                    :dense=true
+                                                    flat 
+                                                    :hide-details=true
+                                                    :hint="compo.hint" 
+                                                    :is="compo.type"
+                                                    :loading="compo.loading"
+                                                    style="width: 100%;"
+                                                    :single-line=true
+                                                    
+                                                    @change="onAction(
+                                                                pickerConfig.pickerDate,
+                                                                $event, 
+                                                                compo.action, 
+                                                                compo.value, 
+                                                                getSiblingData(option, compo.needs) || null,
+                                                                compo.if
+                                                            )"                                           
+                                                >
+                                                    <v-icon v-if="compo.icon">{{ compo.icon }}</v-icon>
+                                                    <template slot="default">
+                                                        {{ $vuetify.t(compo.title) }}
+                                                    </template> 
+                                                </component>
+                                            </v-layout>
+                                        </template>
+                                    </v-btn-toggle>
+                                </template>
+                                  
+                                <template v-else>
                                     <template v-for="(compo,index) in option.options">
                                         <v-layout v-if="(allowBackInTime || evaluate(compo.if))" row fill-height :key="index" class="mx-3 py-1"> 
                                             <component
@@ -53,22 +88,22 @@
                                                 :dense=true
                                                 flat 
                                                 :hide-details=true
-                                                :hint="compo.hint" 
+                                                :hint="$vuetify.t(compo.label)" 
                                                 :is="compo.type"
                                                 :items="buildSelectionList(compo.items)"
                                                 :item-text="getItemText"
                                                 :item-value="getItemValue"
-                                                :label="compo.label"
+                                                :label="$vuetify.t(compo.label)"
                                                 :loading="compo.loading"
-                                                :multiple=true
-                                                :no-data-text="compo.label"
+                                                :multiple="compo.multiple"
+                                                :no-data-text="$vuetify.t(compo.label)"
                                                 :prepend-icon="compo.icon"
                                                 style="width: 100%;"
                                                 :single-line=true
                                                 :small-chips=true
                                                 
                                                 @change="onAction(
-                                                            pickerDate,
+                                                            pickerConfig.pickerDate,
                                                             $event, 
                                                             compo.action, 
                                                             typeof compo.value === 'boolean' ? !compo.value : compo.value, 
@@ -78,6 +113,7 @@
                                                 :value="compo.isOpen"
                                                 v-bind:compo="compo"
                                                 v-model="compo.value"
+                                            
                                             >
                                                 <template
                                                     slot="selection"
@@ -85,7 +121,7 @@
                                                 >
                                                     <template v-if="item.text.length > 5">
                                                         <template v-if="compo.value.length === 1">
-                                                            <v-chip v-if="index === 0" :small=true>
+                                                            <v-chip v-if="index === 0" small>
                                                                 <span>{{ item.text }}</span>
                                                             </v-chip>
                                                         </template>
@@ -99,12 +135,12 @@
                                                     </template>
                                                     <template v-else>                                                        
                                                         <template v-if="compo.value.length <= 3">
-                                                            <v-chip :small=true>
+                                                            <v-chip small>
                                                                 <span>{{ item.text }}</span>
                                                             </v-chip>
                                                         </template>
                                                         <template v-else>    
-                                                            <v-chip v-if="index <= 1" :small=true>
+                                                            <v-chip v-if="index <= 1" small>
                                                                 <span>{{ item.text }}</span>
                                                             </v-chip>
                                                             <span v-if="index === 2"
@@ -119,7 +155,8 @@
                                             </component>
                                         </v-layout>
                                     </template>
-                                </v-btn-toggle>
+                                </template>
+                        
                             </v-layout>
                         </v-list-tile-content>
 
@@ -131,13 +168,13 @@
 </template>
 
 <script>
-import QuickSelectData from './mixins/DateRangeQuickSelectDates.js'
-import DateRangePlugin from './mixins/DateRangePlugin.js'
+import FinanceShortcuts from './mixins/DateRangeShortcutsFinance.js'
 
 export default {
     name: 'VDateRangeDrawer',
-    mixins: [QuickSelectData, DateRangePlugin],
+    mixins: [FinanceShortcuts],
     data:() => ({
+        btnGroup: null,
         isOpen: false
     }),
     props: {
@@ -150,7 +187,7 @@ export default {
             default: false
         }
     },
-    inject: ['locale', 'mode'],
+    
     methods: {
         /**
          * In support of quick selection helpers;
