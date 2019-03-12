@@ -43,24 +43,24 @@ config.plugins = (config.plugins || []).concat([
   new UglifyJSPlugin({
     sourceMap: true,
 
-    compress: {
-      warnings: false,
-      drop_debugger: true,
-      drop_console: true,
-      screw_ie8: true,
-      global_defs: {
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-      },
-    },
+    // compress: {
+    //   warnings: false,
+    //   drop_debugger: true,
+    //   drop_console: true,
+    //   screw_ie8: true,
+    //   global_defs: {
+    //     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    //   },
+    // },
 
-    mangle: {
-      screw_ie8: true,
-    },
+    // mangle: {
+    //   screw_ie8: true,
+    // },
 
-    output: {
-      comments: false,
-      screw_ie8: true,
-    }
+    // output: {
+    //   comments: false,
+    //   screw_ie8: true,
+    // }
   }),
 
   new webpack.optimize.OccurrenceOrderPlugin(),

@@ -1,13 +1,14 @@
 <template>
     <div id="app">
-        <v-app :dark="dark">
-            <v-container grid-list-md>
+        <v-app id="inspire" :dark="dark" ma-5>
+            <div>
+            <v-container grid-list-md v-if="showExtended"> 
                 <v-layout row wrap v-resize="onResize">
-                    <v-flex xs11>
+                    <v-flex xs9>
                         <v-subheader>Window Size</v-subheader>
                         {{ windowSize }}
                     </v-flex>
-                    <v-flex xs1>
+                    <v-flex xs3>
                         <v-select
                             v-model="langOverride"
                             :items="langOptions"
@@ -134,27 +135,35 @@
                 </v-layout>
                 <v-layout row wrap>
                     <v-flex xs12 lg4>
-
-                            <v-date-range-picker v-model="dateRange3.dates"
-                                :allow-back-in-time=false
-                                :auto-hide="dateRange3.autoHide"
-                                :auto-size="dateRange3.autoSize"     
-                                :header-color="dateRange3.color"
-                                :hide-disabled="dateRange3.hideDisabled"
-                                :live-update="dateRange3.liveUpdates"
-                                :locale="browserLocale"
-                                :multi-range=false
-                                :no-title=false
-                                :num-pickers=2
-                                :reactive=true
-                                :show-week=true
-                                :transitions=true
-                            >
-                            </v-date-range-picker>
-
                     </v-flex>
                 </v-layout>
             </v-container>
+
+            <v-date-range-picker v-model="dateRange3.dates"
+                :allow-back-in-time=false
+                :auto-hide="dateRange3.autoHide"
+                :auto-size="dateRange3.autoSize"
+                class="mb-3"
+                :header-color="dateRange3.color"
+                :hide-disabled="dateRange3.hideDisabled"
+                :live-update="dateRange3.liveUpdates"
+                :locale="browserLocale"
+                :multi-range=false
+                :no-title=false
+                :num-pickers=2
+                :reactive=true
+                :show-week=true
+                :transitions=true
+            >
+            </v-date-range-picker>
+
+            <v-date-picker v-model="picker"></v-date-picker>
+
+            <div>
+                <v-checkbox v-model="landscape" label="Landscape"></v-checkbox>
+                <v-date-picker v-model="pickerMonth" :landscape="landscape" type="month"></v-date-picker>
+            </div>
+
             <v-snackbar
                 v-model="snackbar.visible"
                 :color="snackbar.color"
@@ -171,6 +180,7 @@
                 Close
                 </v-btn>
             </v-snackbar>
+            </div>
         </v-app>
     </div>
 </template>
@@ -193,6 +203,8 @@ export default {
     },
     mixins: [DateHelper],
     data: () => ({
+        picker: new Date().toISOString().substring(0,10),
+        pickerMonth: new Date().toISOString().substring(0,7),
         browserLocale: 'en-US',
         langOverride: 'en',
         onLine: navigator.onLine,
@@ -258,6 +270,8 @@ export default {
             text: ''
         },
         dark: true,
+        landscape: false,
+        showExtended: false,
         windowSize: {
             x: 0,
             y: 0
@@ -287,11 +301,10 @@ export default {
         },
         browserLocale: {
             handler(val, prev) {
-                console.log(val, prev)
                 if (val !== prev) {
                     let _supported = Object.keys(this.$vuetify.lang.locales)
                     _supported.map(_l => this.langOptions.push({ text: _l}) )
-                    console.log('Supported languages: ',_supported)
+
                     if (val && _supported.includes(val)) {
                         this.$vuetify.lang.current = val
                     } else if (val && _supported.includes(val.slice(0, val.indexOf('-')))) {

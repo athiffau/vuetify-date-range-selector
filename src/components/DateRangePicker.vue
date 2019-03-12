@@ -1,82 +1,94 @@
 <template>
-
+<div v-responsive="{dynaWidth: el => onRangePickerResize(el)}">
+    <div 
+        ref="dateRangePicker" 
+        class="v-picker v-card v-picker--date " 
+        :class="themeClasses" 
+        style="flex-direction: column"
+        :style="{'max-width': maxCardWidth === 0 ? 'none' : maxCardWidth+'px'}" 
+    >
     <v-layout row wrap v-resize="onResize">
         <v-flex>
-            <v-card
-                :dark="dark"
-                :width="maxCardWidth"
-                :ref="'pickerContainer'">
                 <slot name="drawerOptions"></slot>
-                <v-layout row wrap>
-                <template v-for="index in dateConfig.visiblePickers">  
-                    <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
-                        :allow-date-change="index === 1"
-                        :allowed-dates="allowedDates"
-                        :color="color"
-                        :dark="dark"
-                        :day-format="dayFormat"
-                        :event-color="eventColor"
-                        :events="events"
-                        :first-day-of-week="firstDayOfWeek"
-                        :header-color="getPickerColor(index)"
-                        :header-date-format="headerDateFormat"
-                        :hide-disabled="hideDisabled"
-                        :hover-link="hovering"
-                        :key="index"
-                        :light="light"
-                        :locale="locale"
-                        :min="dateConfig[`pickerMin${index}`]"
-                        :max="dateConfig[`pickerMax${index}`]"
-                        multiple
-                        :next-icon="nextIcon"
-                        :no-title="noTitle" 
-                        :picker-date="dateConfig[`pickerView${index}`]"
-                        :prev-icon="prevIcon"
-                        :range="range"
-                        :reactive="reactive"
-                        :ref="`pickerView${index}`"
-                        :scrollable="scrollable"
-                        :show-current="showCurrent"
-                        :show-week="showWeek"
-                        :title-date-format="date => getPickerTitle(index)"
-                        :type="type"
-                        :year-format="yearFormat"
-                        :year-icon="yearIcon"
-                        v-on:change="date => onInputChange(date, index)"
-                        v-on:hoverLink="setHoverLink"
-                        v-on:input="dates => onInputChange(dates, index)" 
-                        v-on:click:date="date => onDateClicked(date, index)" 
-                        v-on:pickerType="pickerType => onHeaderClicked(pickerType, index)"
-                        v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
-                    >
-                    </v-date-picker>
-                </template>  
-                </v-layout>
-                <v-card-actions>
-                    <div v-if="$slots.drawerOptions" class="text-xs-center mx-2">
-                        <v-btn flat fab small @click="toggleOptionsDrawer">
-                            <v-icon >more_vert</v-icon>
-                        </v-btn>
+              
+                    <template v-for="index in dateConfig.visiblePickers">  
+                        <v-date-picker v-model="dateRange" v-if="isPickerVisible(index)"
+                            :allow-date-change="index === 1"
+                            :allowed-dates="allowedDates"
+                            :color="color"
+                            :dark="dark"
+                            :day-format="dayFormat"
+                            :event-color="eventColor"
+                            :events="events"
+                            :first-day-of-week="firstDayOfWeek"
+                            :header-color="getPickerColor(index)"
+                            :header-date-format="headerDateFormat"
+                            :hide-disabled="hideDisabled"
+                            :hover-link="hovering"
+                            :key="index"
+                            :light="light"
+                            :locale="locale"
+                            :min="dateConfig[`pickerMin${index}`]"
+                            :max="dateConfig[`pickerMax${index}`]"
+                            multiple
+                            :next-icon="nextIcon"
+                            :no-title="noTitle" 
+                            :picker-date="dateConfig[`pickerView${index}`]"
+                            :prev-icon="prevIcon"
+                            :range="range"
+                            :reactive="reactive"
+                            :ref="`pickerView${index}`"
+                            :scrollable="scrollable"
+                            :show-current="showCurrent"
+                            :show-week="showWeek"
+                            :title-date-format="date => getPickerTitle(index)"
+                            :type="type"
+                            :year-format="yearFormat"
+                            :year-icon="yearIcon"
+                            v-on:change="date => onInputChange(date, index)"
+                            v-on:hoverLink="setHoverLink"
+                            v-on:input="dates => onInputChange(dates, index)" 
+                            v-on:click:date="date => onDateClicked(date, index)" 
+                            v-on:pickerType="pickerType => onHeaderClicked(pickerType, index)"
+                            v-on:update:pickerDate="date => onPickerUpdate(date, index)" 
+                        >
+                        </v-date-picker>
+                    </template>  
+           
+
+                    <div class="v-picker__actions v-card__actions" :class="themeClasses" >
+                        <v-layout row justify-right>
+                            <div v-if="$slots.drawerOptions" class="text-xs-center mx-2">
+                                <v-btn flat fab small @click="toggleOptionsDrawer">
+                                    <v-icon >more_vert</v-icon>
+                                </v-btn>
+                            </div>
+                            <v-divider vertical v-if="$slots.drawerOptions"></v-divider>
+                            <slot name="panelOptions" v-if="(numPickersVisible > 1 || !this.autoHide) && this.maxWidth === null"></slot>                      
+                            <v-spacer></v-spacer>
+                            <v-divider vertical class="hidden-lg-and-down"></v-divider>
+                            <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
+                            <v-btn @click="onClickSubmit" class="mx-2" color="green">Apply</v-btn>
+
+                        </v-layout>
                     </div>
-                    <v-divider vertical v-if="$slots.drawerOptions"></v-divider>
-                    <slot name="panelOptions" v-if="(numPickersVisible > 1 || !this.autoHide) && this.maxWidth === null"></slot>                      
-                    <v-spacer></v-spacer>
-                    <v-divider vertical class="hidden-lg-and-down"></v-divider>
-                    <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
-                    <v-btn @click="onClickSubmit" class="mx-2" color="green">Apply</v-btn>
-                </v-card-actions>
-            </v-card>
+
         </v-flex>
     </v-layout>
-
+    </div>
+    </div>
 </template>
 
 <script>
     import VDatePicker from 'vuetify/es5/components/VDatePicker/VDatePicker'   
-    
+    import {ResponsiveDirective} from 'vue-responsive-components' 
+
     export default {
-        name: 'v-date-range-picker',
+        name: 'VDateRangePicker',
         extends: VDatePicker,
+        directives: {
+            responsive: ResponsiveDirective
+        },
         data: () => ({
             dateRange: [],
             dateConfig: {
@@ -198,6 +210,11 @@
                 } else {
                     return null
                 }
+            },
+            computedParentWidth() {
+                let _el = this.$refs.dateRangePicker
+                let _elw = _el ? _el.offsetWidth : null
+                return _elw
             }
         },
         provide () {
@@ -221,6 +238,11 @@
                     }
                 },
                 immediate: true
+            },
+            computedParentWidth: {
+                handler(val, prev) {
+                    console.log(`Width was ${prev} and is now ${val}`)
+                }
             },
             userLocale: {
                 handler(val,prev) {
@@ -413,10 +435,11 @@
              * @return {void}
              */
             onResize () {  
-                if (this.autoSize) {
-                    let _screenWidth = window.innerWidth
-                    let _screenHeight = window.innerHeight
-                    
+                //console.log('DateRangePicker.onResize()', this.autoSize)
+                let _screenWidth = window.innerWidth
+                let _screenHeight = window.innerHeight
+
+                if (this.autoSize) {                  
                     let _picker = Array.isArray(this.$refs['pickerView1'])
                             ? this.$refs['pickerView1'][0]
                             : this.$refs['pickerView1']
@@ -435,12 +458,63 @@
                     }
 
                     this.maxCardWidth = this.maxWidth ? Math.min(this.maxWidth, this.dateConfig.visiblePickers * _pickerWidth) : this.dateConfig.visiblePickers * _pickerWidth
-
+                    //console.log(`OnResize set maxCardWidth to ${this.maxCardWidth}`)
                     let vMultiplier = Math.floor(_screenHeight / (_pickerHeight * 1.1))
 
                     if (vMultiplier > 1) {
                         this.dateConfig.visiblePickers = Math.min(this.numPickers, this.dateConfig.visiblePickers * vMultiplier)
                     }                    
+                } 
+
+                this.onRangePickerResize()
+            },
+
+            onRangePickerResize (el) {
+                // console.log(`DateRangePicker.onRangePickerResize()`, el, this.maxWidth, this.autoSize)
+                if (!this.autoSize && this.maxWidth === null) {
+                    let _ref = this.$refs.dateRangePicker
+
+                    // console.log('element: ', el ? el : undefined)
+                    // console.log('element width: ', el ? el.width : 0)
+                    // console.log('ref: ', _ref ? _ref : undefined)
+                    // console.log('ref width: ',_ref ? _ref.offsetWidth : 0)
+
+                    let _parentWidth = el ? el.width : _ref ? _ref.offsetWidth : 0
+                    // console.log('Parent width is: ', _parentWidth)
+
+                    let _picker = Array.isArray(this.$refs['pickerView1'])
+                            ? this.$refs['pickerView1'][0]
+                            : this.$refs['pickerView1']
+                    
+                    let _pickerWidth = _picker && _picker.width ? _picker.width : 290
+        
+                    if (_parentWidth) {
+                        
+                        let _maxItemCount = Math.floor(_parentWidth / _pickerWidth) || 1
+                        let _maxEvenCount = 2 * Math.floor(_maxItemCount / 2) || 1
+                        this.maxCardWidth = Math.floor(_maxEvenCount) * _pickerWidth
+                        // console.log(`Setting maxCardWidth to ${this.maxCardWidth}`)
+                        return this.maxCardWidth + 'px' 
+                    } else {
+                        // console.log('Fallbck mode: ')
+                        let _screenWidth = window.innerWidth
+                        // console.log('Screen width: ', _screenWidth)
+                        // console.log('Picker width: ', _pickerWidth)
+
+                        if (_screenWidth <= 700) {
+                            // console.log(`LESS THAN 700: Setting maxCardWidth to ${_pickerWidth}`)
+                            this.maxCardWidth = _pickerWidth
+                        } else if (_screenWidth > 700 && _screenWidth <= 1024) {
+                            // console.log(`BETWEEN 700 AND 1024: Setting maxCardWidth to ${Math.min(2, this.numPickers) * _pickerWidth}`)
+                            this.maxCardWidth = Math.min(2, this.numPickers) * _pickerWidth
+                        } else if (_screenWidth > 1024 && _screenWidth <= 1368) {
+                            // console.log(`BETWEEN 1024 AND 1368: Setting maxCardWidth to ${Math.min(3, this.numPickers) * _pickerWidth}`)
+                            this.maxCardWidth = Math.min(3, this.numPickers) * _pickerWidth
+                        } else {
+                            // console.log(`GREATER THAN 1368: Setting maxCardWidth to ${this.numPickers * _pickerWidth}`)
+                            this.maxCardWidth = this.numPickers * _pickerWidth
+                        }                        
+                    }
                 }
             },
 
@@ -1235,3 +1309,10 @@
         }
     };
 </script>
+
+<style lang="styl">
+    .v-range-picker__body {
+        background: #424242;
+    }
+
+</style>
