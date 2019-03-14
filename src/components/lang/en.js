@@ -1,5 +1,7 @@
 export default {
     "dateRangePicker" : {
+        "apply": "Apply",
+        "clear": "Clear",
         "warningSingleRange": "Beware, in single-range, only the first and last dates are used to create the final range",
         "rangeNotAllowed" : "Date range is not allowed.",                
         "rangeIncludesPastDates": "Date range includes past dates.",
@@ -64,9 +66,9 @@ export default {
         "noResultsText": "No matching records found",
         "nextPage": "Next page",
         "prevPage": "Previous page"
-      },
-      "dataTable": {
+    },
+    "dataTable": {
         "rowsPerPageText": "Rows per page:"
-      },
-      "noDataText": "No data available"
+    },
+    "noDataText": "No data available"
 }

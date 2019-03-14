@@ -1,5 +1,7 @@
 export default {
     "dateRangePicker" : {
+        "apply": "Appliquer",
+        "clear": "Effacé",
         "warningSingleRange": "Attention, dans une plage unique, seules la première et la dernière date sont utilisées pour créer la plage finale.",
         "rangeNotAllowed": "La plage de dates n'est pas autorisée.",
         "rangeIncludesPastDates": "La plage de dates comprend des dates passées.",

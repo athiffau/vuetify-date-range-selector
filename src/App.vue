@@ -1,43 +1,358 @@
 <template>
     <div id="app">
-        <v-app id="inspire" :dark="dark" ma-5>
+        <v-app id="inspire" :dark="dark">
+            <div class="ma-5">
+                <div class="headline">Testing Vuetify v.1.5.6 modified to support date ranges.</div>
+                <div class="caption">Vuetify mods are from this repo: <a href="https://github.com/athiffau/vuetify-daterange">vuetify-daterange</a></div>
+                <div class="title mb-3 mt-3">This codepen demonstrates the ability to select a date range using one or more date pickers.</div>
+            </div>
+            <v-divider></v-divider>
             <div>
-            <v-container grid-list-md v-if="showExtended"> 
-                <v-layout row wrap v-resize="onResize">
-                    <v-flex xs9>
-                        <v-subheader>Window Size</v-subheader>
-                        {{ windowSize }}
-                    </v-flex>
-                    <v-flex xs3>
-                        <v-select
-                            v-model="langOverride"
-                            :items="langOptions"
-                            prepend-icon="language"
-                            single-line
-                            @change="applyLangSelection"
-                        ></v-select>
-                    </v-flex>
-                </v-layout>
-                <v-layout row wrap>
-                    <v-flex xs12 lg4>
-                        <v-menu ref="menu" v-model="dateRange1.isOpen"
-                            :close-on-content-click="false"
-                            :dark="dateRange1.dark"
-                            full-width
-                            offset-y
-                            :nudge-right="$vuetify.breakpoint.mdAndDown ? 20 : $vuetify.breakpoint.xsOnly ? 0 : 20"
-                            min-width="290px"
-                            transition="scale-transition"                            
-                        >
-                            <v-text-field v-model="dateRange1.text"
-                                clearable
+                <v-container grid-list-md v-if="showExtended"> 
+                    <v-layout row wrap v-resize="onResize">
+                        <!-- <v-flex xs12>
+                            Window size 
+                        </v-flex>
+                        <v-flex xs9>
+                            <v-subheader>Window Size</v-subheader>
+                            {{ windowSize }}
+                        </v-flex> -->
+                        <v-spacer></v-spacer>
+                        <v-flex xs1>
+                            <v-switch v-model="dark" label="dark"></v-switch>
+                        </v-flex>
+                        <v-flex xs3>
+                            <v-select
+                                v-model="langOverride"
+                                :items="langOptions"
+                                prepend-icon="language"
+                                single-line
+                                @change="applyLangSelection"
+                            ></v-select>
+                        </v-flex>
+                    </v-layout>
+
+                    <div class="title ma-3">Demo 1 : Date-range picker with default options</div>
+                    <div class="caption ml-3 mb-3">The date-range picker component assumes a behavior by default that aims to improve usability.</div>
+                    <v-layout row wrap mb-3>
+                        <v-flex xs6 sm6>
+                            <v-date-range-picker v-model="demo1.dates"
+                            ></v-date-range-picker>
+                        </v-flex>
+                        <v-flex xs6 sm6>
+                            <v-list two-line subheader dense>
+                                <v-subheader>General behavior</v-subheader>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Multi-picker view</v-list-tile-title>
+                                        <v-list-tile-sub-title>Date-range with default options will create a component with two date pickers.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Custom styles</v-list-tile-title>
+                                        <v-list-tile-sub-title>You will notice that a custom style is applied for the range start, end and the dates within.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Range start/end controls</v-list-tile-title>
+                                        <v-list-tile-sub-title>The range start/end can be unselected which re-starts the range selection.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Range hover</v-list-tile-title>
+                                        <v-list-tile-sub-title>With only the range start selected, hovering now applies a custom style.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Hovering direction</v-list-tile-title>
+                                        <v-list-tile-sub-title>Range-start is aware of the hovering direction adjusting it's style accordingly.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Action tray</v-list-tile-title>
+                                        <v-list-tile-sub-title>The component includes an action tray with a 'Clear' and 'Apply' button.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Model</v-list-tile-title>
+                                        <v-list-tile-sub-title>By default, the date-range picker does not update its value (model) until the user clicks on 'Apply'</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Picker groups</v-list-tile-title>
+                                        <v-list-tile-sub-title>The date pickers seem `aware` of each other with hovering accross pickers and picker title adjusting depending on user selection.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                                <v-list-tile>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>Master/Slave</v-list-tile-title>
+                                        <v-list-tile-sub-title>The master picker controls slave pickers where slave pickers can only select dates.</v-list-tile-sub-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                            </v-list>
+                        </v-flex>
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 2 : Date-range inherits date-picker functionality</div>
+                    <div class="caption ml-3 mb-3">By extending the default date picker component, the date-range picker supports most of the existing features. In this example we enabled the <code>show-week</code>, <code>show-current</code>, and <code>header-color</code> properties</div>
+                    <v-layout row wrap mb-3>
+                        <v-flex xs9>
+                            <v-date-range-picker v-model="dateRange3.dates"
+                                :allow-back-in-time=false
+                                :auto-hide="dateRange3.autoHide"
+                                :auto-size="dateRange3.autoSize"
+                                :header-color="dateRange3.color"
+                                :hide-disabled="dateRange3.hideDisabled"
+                                :live-update="dateRange3.liveUpdates"
+                                :locale="browserLocale"
+                                :multi-range=false
+                                :no-title=false
+                                :reactive=true
+                                :show-week=true
+                                :transitions=true
+                            >
+                            </v-date-range-picker>
+                        </v-flex>
+                        <v-flex xs3>
+                        </v-flex>
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 3 : In menu</div>
+                    <div class="caption ml-3 mb-3">When integrating a picker into a <code>v-text-field</code>, it is recommended to use the <strong>readonly</strong> prop. This will prevent mobile keyboards from triggering. To save vertical space, you can also hide the picker title. </div>
+                    <div class="caption ml-3 mb-3">As opposed to the date-picker demo this implementation does not use a scoped slot to hook into to identify if the data should be saved or discarded. Instead, the date-range-picker will update its model on apply.</div>
+
+                    <v-layout row wrap mb-3>
+                        <v-flex xs12 lg4>
+                            <v-menu ref="menu" v-model="dateRange1.isOpen"
+                                :close-on-content-click="false"
                                 :dark="dateRange1.dark"
-                                :label="dateRange1.label"
-                                :prepend-icon="dateRange1.icon"
-                                readonly
-                                slot="activator"                                       
-                                @click:clear="onDateRange1ClickClear"
-                            ></v-text-field>
+                                full-width
+                                offset-y
+                                :nudge-right="$vuetify.breakpoint.mdAndDown ? 20 : $vuetify.breakpoint.xsOnly ? 0 : 20"
+                                min-width="290px"
+                                transition="scale-transition"                            
+                            >
+                                <v-text-field v-model="dateRange1.text"
+                                    clearable
+                                    :dark="dateRange1.dark"
+                                    :label="dateRange1.label"
+                                    :prepend-icon="dateRange1.icon"
+                                    readonly
+                                    slot="activator"                                       
+                                    @click:clear="onDateRange1ClickClear"
+                                ></v-text-field>
+                                <v-date-range-picker v-model="dateRange1.dates"
+                                    :allow-back-in-time=true
+                                    :auto-hide="dateRange1.autoHide"
+                                    :auto-size="dateRange1.autoSize"     
+                                    :header-color="dateRange1.color"
+                                    :is-drawer-open="dateRange1.isDrawerOpen"
+                                    :live-update="dateRange1.liveUpdates"
+                                    :locale="browserLocale"
+                                    :multi-range=false
+                                    :no-title=false
+                                    :num-pickers="dateRange1.numPickers"
+                                    :picker-date="dateRange1.pickerDate"
+                                    :reactive=true
+                                    :show-week=true
+                                    :transitions=true
+                                    @input="onDateRange1Input"
+                                    @update="onDateRange1Update"
+                                    @update:pickerDate="onDateRange1PickerDate"
+                                    @update:pickerVisible="val => dateRange2.isDrawerOpen = val"
+                                >
+                                    <template slot="panelOptions">
+                                        <v-date-range-panel
+                                            :dateRange="dateRange1.dates"
+                                            :updateDateRange="dates => updateDateRange(dates, 1)"
+                                        ></v-date-range-panel>
+                                    </template>
+                                </v-date-range-picker>
+                            </v-menu>
+                        </v-flex>
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 4 : In menu with a maximum width</div>
+                    <div class="caption ml-3 mb-3"></div>
+
+                    <v-layout row wrap mb-3>
+                        <v-flex xs12 lg4>
+                            <v-menu
+                                ref="menu"
+                                :close-on-content-click="false"
+                                v-model="dateRange2.isOpen"
+                                :nudge-right="$vuetify.breakpoint.mdAndDown ? 20 : $vuetify.breakpoint.xsOnly ? 0 : 20"
+                                transition="scale-transition"
+                                offset-y
+                                full-width
+                                min-width="290px"
+                                :dark="dateRange2.dark"
+                            >
+                                <v-text-field v-model="dateRange2.text"
+                                    clearable
+                                    :dark="dateRange2.dark"
+                                    :label="localizedPickerLabel"
+                                    :prepend-icon="dateRange2.icon"
+                                    slot="activator"
+                                    readonly 
+                                    @click:clear="onDateRange2ClickClear"
+                                ></v-text-field>
+                                <v-date-range-picker v-model="dateRange2.dates"
+                                    :allow-back-in-time="dateRange2.pastDates"
+                                    :auto-focus="dateRange2.autoFocus"
+                                    :auto-hide="dateRange2.autoHide"
+                                    :auto-size="dateRange2.autoSize" 
+                                    :events="date => eventsEx(date)" 
+                                    :header-color="dateRange2.color"  
+                                    :locale="browserLocale"
+                                    :no-title="dateRange2.noTitle"
+                                    :num-pickers="dateRange2.numPickers"
+                                    :max-width="dateRange2.maxWidth"
+                                    :mode="dateRange2.mode"
+                                    :multi-range=false
+                                    :picker-date="dateRange2.pickerDate"
+                                    :is-drawer-open="dateRange2.isDrawerOpen"
+                                    :reactive=true
+                                    :show-week="dateRange2.showWeeks"
+                                    :start-date="'2017-01-01'"
+                                    :transitions=true               
+                                    @input="onDateRange2Input"
+                                    @update="onDateRange2Update"
+                                    @update:pickerDate="onDateRange2PickerDate"
+                                    @update:pickerVisible="val => dateRange2.isDrawerOpen = val"
+                                    @info="msg => onDateSelectionEvent(msg, 'info', 2)"
+                                    @warning="msg => onDateSelectionEvent(msg, 'warning', 2)"
+                                    @error="msg => onDateSelectionEvent(msg, 'error', 2)"
+                                >
+                                    <template slot="drawerOptions">
+                                        <v-date-range-drawer
+                                            :allow-back-in-time="dateRange2.pastDates"
+                                            :date-range="dateRange2.dates"
+                                            :picker-date="dateRange2.pickerDate"
+                                            :picker-drawer-visible="dateRange2.isDrawerOpen"
+                                            :update-date-range="dates => updateDateRange(dates, 2)"
+                                            @update:pickerVisible="val => dateRange2.isDrawerOpen = val"
+                                            @info="msg => onDateSelectionEvent(msg, 'info', 2)"
+                                            @warning="msg => onDateSelectionEvent(msg, 'warning', 2)"
+                                            @error="msg => onDateSelectionEvent(msg, 'error', 2)"
+                                        ></v-date-range-drawer>
+                                    </template>
+                                </v-date-range-picker>
+                            </v-menu>
+                        </v-flex>                    
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 5 : In dialog</div>
+                    <div class="caption ml-3 mb-3">In addition to demonstrating the use of a date-range-picker within a dialog we also set the <code>num-pickers</code> prop to 4 and the <code>max-width</code> prop to 580 forcing the picker view in a 2 by 2 layout.</div>
+
+                    <v-layout row wrap mb-3>
+                        <v-flex xs12 lg4>
+                            <v-dialog
+                                ref="dialog"
+                                v-model="dateRange4.isOpen"
+                                persistent
+                                lazy
+                                full-width
+                                :width="dateRange4.maxWidth"
+                            >
+                                <template v-slot:activator="{ on }">
+                                    <v-text-field
+                                        clearable
+                                        v-model="dateRange4.text"
+                                        :label="localizedPickerLabel"
+                                        :prepend-icon="dateRange4.icon"
+                                        readonly
+                                        @click:clear="onDateRange4ClickClear"
+                                        v-on="on"
+                                    ></v-text-field>
+                                </template>
+                                <v-date-range-picker v-model="dateRange4.dates"
+                                    :locale="browserLocale"
+                                    :num-pickers="dateRange4.numPickers"
+                                    :max-width="dateRange4.maxWidth"
+                                    @input="onDateRange4Input"
+                                    @update="onDateRange4Update"
+                                    @update:pickerDate="onDateRange4PickerDate"
+                                    @info="msg => onDateSelectionEvent(msg, 'info', 4)"
+                                    @warning="msg => onDateSelectionEvent(msg, 'warning', 4)"
+                                    @error="msg => onDateSelectionEvent(msg, 'error', 4)"
+                                ></v-date-range-picker>
+                            </v-dialog>
+                        </v-flex>
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 6 : Shortcuts Drawer - Quick range selections</div>
+                    <div class="caption ml-3 mb-3">Using the slot <code>drawerOptions</code> we can inject a drawer into the date-range-picker widget. The drawer is a seperate component that shares model and state with the date-range-picker. More information on the <strong>date-range-drawer</strong> component below.</div>
+
+                    <v-layout row wrap mb-3>
+                        <v-flex xs6>
+                            <v-date-range-picker v-model="dateRange6.dates"
+                                :allow-back-in-time="dateRange6.pastDates"
+                                :auto-focus="dateRange6.autoFocus"
+                                :auto-hide="dateRange6.autoHide"
+                                :auto-size="dateRange6.autoSize" 
+                                :header-color="dateRange6.color"  
+                                :locale="browserLocale"
+                                :no-title="dateRange6.noTitle"
+                                :num-pickers="dateRange6.numPickers"
+                                :max-width="dateRange6.maxWidth"
+                                :mode="dateRange6.mode"
+                                :multi-range=false
+                                :picker-date="dateRange6.pickerDate"
+                                :is-drawer-open="dateRange6.isDrawerOpen"
+                                :reactive=true
+                                :show-week="dateRange6.showWeeks"
+                                :transitions=true               
+                                @input="onDateRange6Input"
+                                @update="onDateRange6Update"
+                                @update:pickerDate="onDateRange6PickerDate"
+                                @update:pickerVisible="val => dateRange6.isDrawerOpen = val"
+                                @info="msg => onDateSelectionEvent(msg, 'info', 6)"
+                                @warning="msg => onDateSelectionEvent(msg, 'warning', 6)"
+                                @error="msg => onDateSelectionEvent(msg, 'error', 6)"
+                            >
+                                <template slot="drawerOptions">
+                                    <v-date-range-drawer
+                                        :allow-back-in-time="dateRange6.pastDates"
+                                        :date-range="dateRange6.dates"
+                                        :picker-date="dateRange6.pickerDate"
+                                        :picker-drawer-visible="dateRange6.isDrawerOpen"
+                                        :update-date-range="dates => updateDateRange(dates, 6)"
+                                        @update:pickerVisible="val => dateRange6.isDrawerOpen = val"
+                                        @info="msg => onDateSelectionEvent(msg, 'info', 6)"
+                                        @warning="msg => onDateSelectionEvent(msg, 'warning', 6)"
+                                        @error="msg => onDateSelectionEvent(msg, 'error', 6)"
+                                    ></v-date-range-drawer>
+                                </template>
+                            </v-date-range-picker>
+                            </v-card>
+                        </v-flex>
+                    </v-layout>
+
+                    <v-divider></v-divider>
+
+                    <div class="title ma-3">Demo 7 : Shortcuts Panel - Quick range selections</div>
+                    <div class="caption ml-3 mb-3">As an alternative to the drawer, a second slot named <code>panelOptions</code> can be used to inject UI in the date-range-picker's action tray.</div>
+
+                    <v-layout row wrap mb-3>
+                        <v-flex xs12>
                             <v-date-range-picker v-model="dateRange1.dates"
                                 :allow-back-in-time=true
                                 :auto-hide="dateRange1.autoHide"
@@ -65,121 +380,33 @@
                                     ></v-date-range-panel>
                                 </template>
                             </v-date-range-picker>
-                        </v-menu>
-                    </v-flex>
+                        </v-flex>
+                    </v-layout>
 
-                    <v-flex xs12 lg4>
-                        <v-menu
-                            ref="menu"
-                            :close-on-content-click="false"
-                            v-model="dateRange2.isOpen"
-                            :nudge-right="$vuetify.breakpoint.mdAndDown ? 20 : $vuetify.breakpoint.xsOnly ? 0 : 20"
-                            transition="scale-transition"
-                            offset-y
-                            full-width
-                            min-width="290px"
-                            :dark="dateRange2.dark"
-                        >
-                            <v-text-field v-model="dateRange2.text"
-                                clearable
-                                :dark="dateRange2.dark"
-                                :label="localizedPickerLable"
-                                :prepend-icon="dateRange2.icon"
-                                slot="activator"
-                                readonly 
-                                @click:clear="onDateRange2ClickClear"
-                            ></v-text-field>
-                            <v-date-range-picker v-model="dateRange2.dates"
-                                :allow-back-in-time="dateRange2.pastDates"
-                                :auto-focus="dateRange2.autoFocus"
-                                :auto-hide="dateRange2.autoHide"
-                                :auto-size="dateRange2.autoSize" 
-                                :events="date => eventsEx(date)" 
-                                :header-color="dateRange2.color"  
-                                :locale="browserLocale"
-                                :no-title="dateRange2.noTitle"
-                                :num-pickers="dateRange2.numPickers"
-                                :max-width="dateRange2.maxWidth"
-                                :mode="dateRange2.mode"
-                                :multi-range=false
-                                :picker-date="dateRange2.pickerDate"
-                                :is-drawer-open="dateRange2.isDrawerOpen"
-                                :reactive=true
-                                :show-week="dateRange2.showWeeks"
-                                :start-date="'2017-01-01'"
-                                :transitions=true               
-                                @input="onDateRange2Input"
-                                @update="onDateRange2Update"
-                                @update:pickerDate="onDateRange2PickerDate"
-                                @update:pickerVisible="val => dateRange2.isDrawerOpen = val"
-                                @info="msg => onDateSelectionEvent(msg, 'info', 2)"
-                                @warning="msg => onDateSelectionEvent(msg, 'warning', 2)"
-                                @error="msg => onDateSelectionEvent(msg, 'error', 2)"
-                            >
-                                <template slot="drawerOptions">
-                                    <v-date-range-drawer
-                                        :allow-back-in-time="dateRange2.pastDates"
-                                        :date-range="dateRange2.dates"
-                                        :picker-date="dateRange2.pickerDate"
-                                        :picker-drawer-visible="dateRange2.isDrawerOpen"
-                                        :update-date-range="dates => updateDateRange(dates, 2)"
-                                        @update:pickerVisible="val => dateRange2.isDrawerOpen = val"
-                                        @info="msg => onDateSelectionEvent(msg, 'info', 2)"
-                                        @warning="msg => onDateSelectionEvent(msg, 'warning', 2)"
-                                        @error="msg => onDateSelectionEvent(msg, 'error', 2)"
-                                    ></v-date-range-drawer>
-                                </template>
-                            </v-date-range-picker>
-                        </v-menu>
-                    </v-flex>
-                </v-layout>
-                <v-layout row wrap>
-                    <v-flex xs12 lg4>
-                    </v-flex>
-                </v-layout>
-            </v-container>
 
-            <v-date-range-picker v-model="dateRange3.dates"
-                :allow-back-in-time=false
-                :auto-hide="dateRange3.autoHide"
-                :auto-size="dateRange3.autoSize"
-                class="mb-3"
-                :header-color="dateRange3.color"
-                :hide-disabled="dateRange3.hideDisabled"
-                :live-update="dateRange3.liveUpdates"
-                :locale="browserLocale"
-                :multi-range=false
-                :no-title=false
-                :num-pickers=2
-                :reactive=true
-                :show-week=true
-                :transitions=true
-            >
-            </v-date-range-picker>
+                <!-- <v-date-picker v-model="picker"></v-date-picker>
 
-            <v-date-picker v-model="picker"></v-date-picker>
-
-            <div>
-                <v-checkbox v-model="landscape" label="Landscape"></v-checkbox>
-                <v-date-picker v-model="pickerMonth" :landscape="landscape" type="month"></v-date-picker>
-            </div>
-
-            <v-snackbar
-                v-model="snackbar.visible"
-                :color="snackbar.color"
-                :multi-line="snackbar.mode === 'multi-line'"
-                :timeout="snackbar.timeout"
-                :vertical="snackbar.mode === 'vertical'"
-            >
-                {{ snackbar.text }}
-                <v-btn
-                dark
-                flat
-                @click="snackbar.visible = false"
+                <div>
+                    <v-checkbox v-model="landscape" label="Landscape"></v-checkbox>
+                    <v-date-picker v-model="pickerMonth" :landscape="landscape" type="month"></v-date-picker>
+                </div> -->
+                </v-container>
+                <v-snackbar
+                    v-model="snackbar.visible"
+                    :color="snackbar.color"
+                    :multi-line="snackbar.mode === 'multi-line'"
+                    :timeout="snackbar.timeout"
+                    :vertical="snackbar.mode === 'vertical'"
                 >
-                Close
-                </v-btn>
-            </v-snackbar>
+                    {{ snackbar.text }}
+                    <v-btn
+                    dark
+                    flat
+                    @click="snackbar.visible = false"
+                    >
+                    Close
+                    </v-btn>
+                </v-snackbar>
             </div>
         </v-app>
     </div>
@@ -205,10 +432,13 @@ export default {
     data: () => ({
         picker: new Date().toISOString().substring(0,10),
         pickerMonth: new Date().toISOString().substring(0,7),
-        browserLocale: 'en-US',
+        browserLocale: '',
         langOverride: 'en',
         onLine: navigator.onLine,
         langOptions: [],
+        demo1: {
+            dates: []
+        },
         dateRange1: {
             autoHide: false,
             autoSize: false,
@@ -262,6 +492,48 @@ export default {
             pickerDate: null,
             text: ''
         },
+        dateRange4: {
+            autoHide: false,
+            autoSize: true,
+            autoFocus: true,
+            dates: [],
+            dark: false,
+            color: ["blue", "dark grey"],
+            isOpen: false,
+            icon: 'event',
+            isDrawerOpen: false,
+            label: '',
+            numPickers: 4,
+            maxWidth: 580,
+            mode: 'fuzzy',
+            multiRange: false,
+            noTitle: false,
+            pastDates: false,
+            pickerDate: null,
+            showWeeks: true,
+            text: ''
+        },
+        dateRange6: {
+            autoHide: false,
+            autoSize: true,
+            autoFocus: true,
+            dates: [],
+            dark: false,
+            color: ["blue", "dark grey"],
+            isOpen: false,
+            icon: 'event',
+            isDrawerOpen: false,
+            label: '',
+            numPickers: 2,
+            maxWidth: 580,
+            mode: 'fuzzy',
+            multiRange: false,
+            noTitle: false,
+            pastDates: true,
+            pickerDate: null,
+            showWeeks: true,
+            text: ''
+        },
         snackbar: {
             visible: false,
             color: '',
@@ -271,7 +543,7 @@ export default {
         },
         dark: true,
         landscape: false,
-        showExtended: false,
+        showExtended: true,
         windowSize: {
             x: 0,
             y: 0
@@ -296,6 +568,13 @@ export default {
             handler(val,prev) {
                 if (val !== prev) {
                     this.setRange3Text()
+                }
+            }
+        },
+        Range4Dates: {
+            handler(val,prev) {
+                if (val !== prev) {
+                    this.setRange4Text()
                 }
             }
         },
@@ -328,7 +607,10 @@ export default {
         Range3Dates() {
             return this.dateRange3.dates
         },
-        localizedPickerLable() {
+        Range4Dates() {
+            return this.dateRange4.dates
+        },
+        localizedPickerLabel() {
             return this.$vuetify.t('$vuetify.dateRangePicker.defaultLabel')
         }
     },
@@ -340,10 +622,16 @@ export default {
             this.dateRange1.isOpen = false
         },
         onDateRange1Update (dates) {
-            this.dateRange1.dates = dates.sort()
+            this.dateRange1.dates = dates
         },
         onDateRange2Update (dates) {
-            this.dateRange2.dates = dates.sort()
+            this.dateRange2.dates = dates
+        },
+        onDateRange4Update (dages) {
+            this.dateRange4.dates = dates
+        },
+        onDateRange6Update (dates) {
+            this.dateRange6.dates = dates
         },
         onDateRange1PickerDate (date) {
             this.dateRange1.pickerDate = date
@@ -351,15 +639,30 @@ export default {
         onDateRange2PickerDate (date) {
             this.dateRange2.pickerDate = date
         },
+        onDateRange4PickerDate (date) {
+            this.dateRange4.pickerDate = date
+        },
+        onDateRange6PickerDate (date) {
+            this.dateRange6.pickerDate = date
+        },
         onDateRange2Input (dates) {
             console.log(dates)
             this.dateRange2.isOpen = false
+        },
+        onDateRange4Input (dates) {
+            this.dateRange4.isOpen =  false
+        },
+        onDateRange6Input (dates) {
+            this.dateRange6.isOpen = false
         },
         onDateRange1ClickClear () {
             this.dateRange1.dates = []
         },
         onDateRange2ClickClear () {
             this.dateRange2.dates = []
+        },
+        onDateRange4ClickClear () {
+            this.dateRange4.dates = []
         },
         onDateSelectionEvent (msg, mode, index) {
             console.log(`Oops! - ${mode.toUpperCase()}: ${msg}`)
@@ -390,12 +693,27 @@ export default {
         setRange3Text (val) {
             this.dateRange3.text = this.dateRangeText(this.dateRange3.dates, this.browserLocale)
         },
+        setRange4Text (val) {
+            this.dateRange4.text = this.dateRangeText(this.dateRange4.dates, this.browserLocale)
+        },
         updateDateRange (dates, index) {
             if (index === 1) {
-                this.dateRange1.dates = dates.sort()
+                this.dateRange1.dates = dates
             }
-            if (index === 2) {
-                this.dateRange2.dates = dates.sort()
+            else if (index === 2) {
+                this.dateRange2.dates = dates
+            }
+            else if (index === 4) {
+                this.dateRange4.dates = dates
+            }
+            else if (index === 5) {
+                this.dateRange5.dates = dates
+            }
+            else if (index === 6) {
+                this.dateRange6.dates = dates
+            }
+            else if (index === 7) {
+                this.dateRange7.dates = dates
             }
         }
     },
@@ -410,4 +728,5 @@ export default {
     html {
     overflow-y: auto !important;
     }
+
 </style>

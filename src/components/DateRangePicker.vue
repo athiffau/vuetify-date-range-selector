@@ -4,11 +4,12 @@
         ref="dateRangePicker" 
         class="v-picker v-card v-picker--date " 
         :class="themeClasses" 
-        style="flex-direction: column"
+        style="flex-direction: column; overflow: hidden;"
         :style="{'max-width': maxCardWidth === 0 ? 'none' : maxCardWidth+'px'}" 
     >
     <v-layout row wrap v-resize="onResize">
         <v-flex>
+
                 <slot name="drawerOptions"></slot>
               
                     <template v-for="index in dateConfig.visiblePickers">  
@@ -56,8 +57,8 @@
                     </template>  
            
 
-                    <div class="v-picker__actions v-card__actions" :class="themeClasses" >
-                        <v-layout row justify-right>
+                    <div class="v-picker__actions v-card__actions" :class="themeClasses" style="min-height: 63px;">
+                        <v-layout row justify-right align-center>
                             <div v-if="$slots.drawerOptions" class="text-xs-center mx-2">
                                 <v-btn flat fab small @click="toggleOptionsDrawer">
                                     <v-icon >more_vert</v-icon>
@@ -67,8 +68,8 @@
                             <slot name="panelOptions" v-if="(numPickersVisible > 1 || !this.autoHide) && this.maxWidth === null"></slot>                      
                             <v-spacer></v-spacer>
                             <v-divider vertical class="hidden-lg-and-down"></v-divider>
-                            <v-btn @click="onClickClear" class="ml-2" color="red">Clear</v-btn>
-                            <v-btn @click="onClickSubmit" class="mx-2" color="green">Apply</v-btn>
+                            <v-btn @click="onClickClear" class="ml-2" color="red">{{ $vuetify.t('$vuetify.dateRangePicker.clear') }}</v-btn>
+                            <v-btn @click="onClickSubmit" class="mx-2" color="green">{{ $vuetify.t('$vuetify.dateRangePicker.apply') }}</v-btn>
 
                         </v-layout>
                     </div>
@@ -110,7 +111,7 @@
         props: {
             allowBackInTime: {
                 type: Boolean,
-                default: false
+                default: true
             },
             autoHide: {
                 type: Boolean,

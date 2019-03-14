@@ -1,6 +1,6 @@
-import VDateRangePicker from './components/DateRangePicker'
-import VDateRangeShortcutDrawer from './components/DateRangeShortcutDrawer'
-import VDateRangeShortcutPanel from './components/DateRangeShortcutPanel'
+import VDateRangePicker from './components/DateRangePicker.vue'
+import VDateRangeShortcutDrawer from './components/DateRangeShortcutDrawer.vue'
+import VDateRangeShortcutPanel from './components/DateRangeShortcutPanel.vue'
 
 export default {
     VDateRangePicker: {
@@ -19,3 +19,5 @@ export default {
         }
     }
 }
+
+// export default Vue => Vue.component(VDateRangePicker.name, VDateRangePicker)
