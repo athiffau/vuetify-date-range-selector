@@ -64,11 +64,11 @@ In addition to the VDateRangePicker component, this package includes a shortcut 
 ## Installation and Usage
 
 ### Installation
-    yard add vuetify-daterange-selector</code>
+    yard add vuetify-daterange-selector
 
     OR
 
-    nmp install --save vuetify-daterange-selector</code>
+    nmp install --save vuetify-daterange-selector
 
 ### Install as a Plugin
 
@@ -135,11 +135,13 @@ Instead of occupying precious pixel real estate for the shortcut controls, this 
 the same functionality that users have come to expect with the following scheme:<br/>
 
 - drawerOptions: The draawerOptions slot, as the name suggests, adds a temporary drawer to the date-range-picker UI.
+
 ![alt text](./public/date-range-drawer.gif "DateRange Drawer")
 
     <i>When the is slot is populated, the UI automatically displays a button in the action tray to activate the drawer.</i>
 
-- panelOptions: The panelOptions slot on the other hand adds controls right-justified within the action tray.<br/>
+- panelOptions: The panelOptions slot on the other hand adds controls right-justified within the action tray.
+
 ![alt text](./public/date-range-panel.gif "DateRange Panel")
 
     <i>The panel displays component sets within horizontal expansion panels that are useful in reducing the amount for 
