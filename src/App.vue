@@ -2,7 +2,7 @@
     <div id="app">
         <v-app id="inspire" :dark="dark">
             <div class="ma-5">
-                <div class="headline">Testing Vuetify v.1.5.6 modified to support date ranges.</div>
+                <div class="headline">Testing Vuetify v.1.5.7 modified to support date ranges.</div>
                 <div class="caption">Vuetify mods are from this repo: <a href="https://github.com/athiffau/vuetify-daterange">vuetify-daterange</a></div>
                 <div class="title mb-3 mt-3">This codepen demonstrates the ability to select a date range using one or more date pickers.</div>
             </div>
