@@ -138,14 +138,13 @@ the same functionality that users have come to expect with the following scheme:
 
 ![alt text](./public/date-range-drawer.gif "DateRange Drawer")
 
-    <i>When the is slot is populated, the UI automatically displays a button in the action tray to activate the drawer.</i>
+*When the is slot is populated, the UI automatically displays a button in the action tray to activate the drawer.*
 
 - panelOptions: The panelOptions slot on the other hand adds controls right-justified within the action tray.
 
 ![alt text](./public/date-range-panel.gif "DateRange Panel")
 
-    <i>The panel displays component sets within horizontal expansion panels that are useful in reducing the amount for 
-    horizontal space for large component sets.</i>
+*The panel displays component sets within horizontal expansion panels that are useful in reducing the amount for horizontal space for large component sets.*
 
 The panel offers a more streamlined interface for shortcuts but requires sufficient space in the action tray. The drawer<
 works nicely within a single picker layout (for example on mobile) but requires a few more clicks to access.
