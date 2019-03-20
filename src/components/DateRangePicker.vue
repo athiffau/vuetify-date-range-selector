@@ -65,9 +65,9 @@
                                 </v-btn>
                             </div>
                             <v-divider vertical v-if="$slots.drawerOptions"></v-divider>
-                            <slot name="panelOptions" v-if="(numPickersVisible > 1 || !this.autoHide) && this.maxWidth === null"></slot>                      
+                            <slot name="panelOptions" v-if="(dateConfig['visiblePickers'] >= 3 && this.maxWidth === null)"></slot>                      
                             <v-spacer></v-spacer>
-                            <v-divider vertical class="hidden-lg-and-down"></v-divider>
+                            <v-divider vertical class="hidden-lg-and-down" v-if="$slots.panelOptions"></v-divider>
                             <v-btn @click="onClickClear" class="ml-2" color="red">{{ $vuetify.t('$vuetify.dateRangePicker.clear') }}</v-btn>
                             <v-btn @click="onClickSubmit" class="mx-2" color="green">{{ $vuetify.t('$vuetify.dateRangePicker.apply') }}</v-btn>
 
@@ -141,10 +141,10 @@
                 type: Boolean,
                 default: false
             },
-            noTitle: {
-                type: Boolean,
-                default: false
-            },
+            // noTitle: {
+            //     type: Boolean,
+            //     default: false
+            // },
             maxWidth: {
                 type: Number,
                 default: null
@@ -305,6 +305,32 @@
                         this.onResize()
                     }
                 }
+            },
+            numPickers: {
+                handler(val, prev) {
+                    if (val !== prev) {
+                        this.onResize()
+
+                        let _d = this.validateDate(this.dateConfig.pickerView1 || this.startDate || null)
+
+                        for (let i=1; i<=this.dateConfig.visiblePickers; i++) {
+                            if (typeof this.dateConfig[`pickerView${i}`] === 'undefined') {
+                                _d.setMonth(_d.getMonth()+i-1) 
+                            
+                                //bind the picker mode for clearing
+                                this.$set(this.dateConfig, `pickerType${i}`, 'date')
+
+                                //setup a min if we are not allowed to go back in time
+                                if (!this.allowBackInTime) {
+                                    this.$set(this.dateConfig, `pickerMin${i}`, this.dateToISOStr( _d, 10))
+                                }
+
+                                //setup the picker view date for this index                  
+                                this.$set(this.dateConfig, `pickerView${i}`, this.dateToISOStr( _d, 7 ) )
+                            }
+                        }
+                    }
+                }
             }
         },
         methods: {
@@ -447,15 +473,16 @@
                     
                     let _pickerWidth = _picker && _picker.width ? _picker.width : 290
                     let _pickerHeight = _picker && _picker.height ? _picker.height : 374
+                    let _numPickers = this.numPickers > 0 ? this.numPickers : 1
 
                     if (_screenWidth <= 700) {
                         this.dateConfig.visiblePickers = 1
                     } else if (_screenWidth > 700 && _screenWidth <= 1024) {
-                        this.dateConfig.visiblePickers = Math.min(2, this.numPickers)
+                        this.dateConfig.visiblePickers = Math.min(2, _numPickers)
                     } else if (_screenWidth > 1024 && _screenWidth <= 1368) {
-                        this.dateConfig.visiblePickers = Math.min(3, this.numPickers)
+                        this.dateConfig.visiblePickers = Math.min(3, _numPickers)
                     } else {
-                        this.dateConfig.visiblePickers = this.numPickers
+                        this.dateConfig.visiblePickers = _numPickers
                     }
 
                     this.maxCardWidth = this.maxWidth ? Math.min(this.maxWidth, this.dateConfig.visiblePickers * _pickerWidth) : this.dateConfig.visiblePickers * _pickerWidth
@@ -463,13 +490,18 @@
                     let vMultiplier = Math.floor(_screenHeight / (_pickerHeight * 1.1))
 
                     if (vMultiplier > 1) {
-                        this.dateConfig.visiblePickers = Math.min(this.numPickers, this.dateConfig.visiblePickers * vMultiplier)
+                        this.dateConfig.visiblePickers = Math.min(_numPickers, this.dateConfig.visiblePickers * vMultiplier)
                     }                    
                 } 
 
                 this.onRangePickerResize()
             },
 
+            /**
+             * Picker resize event handler
+             * 
+             * 
+             */
             onRangePickerResize (el) {
                 // console.log(`DateRangePicker.onRangePickerResize()`, el, this.maxWidth, this.autoSize)
                 if (!this.autoSize && this.maxWidth === null) {
@@ -1045,9 +1077,7 @@
                     if (_count === -1)
                     {                
                         for (let _p=1; _p<=this.numPickers; _p++) {
-                            if (
-                                this.getMonth(this.dateRange[0]) === this.getMonth(this.dateConfig[`pickerView${_p}`]) 
-                            ) {
+                            if (this.getMonth(this.dateRange[0]) === this.getMonth(this.dateConfig[`pickerView${_p}`]) ) {
                                 if (_count === -1) {
                                     _count = 1
                                 } else {
@@ -1058,10 +1088,10 @@
                     }
                     
                     if (!_count === this.numPickers) {
-                        this.numPickersVisible = _count
+                        this.numPickersVisible = (_count > 0 ? _count : 1)
                     }
 
-                    return _count
+                    return _count > 0 ? _count : 1
                 }
 
                 return null
@@ -1210,7 +1240,8 @@
                     this.dateConfig[`pickerView${index}`] = this.dateToISOStr(_toDate,7)
                 
                     let _nd = null
-                    for (let x=index+1; x<=this.numPickers; x++) {
+                    let _numPickers = this.numPickers > 0 ? this.numPickers : 1
+                    for (let x=index+1; x<=_numPickers; x++) {
                         _nd = this.dateFromStr(this.dateConfig[`pickerView${x}`],0,_diffMonth, _diffYear).toISOString()
                         this.dateConfig[`pickerView${x}`] = _nd.substr(0,7)
                     }
@@ -1272,7 +1303,7 @@
         },
         mounted() {
             //override picker quantity on small displays
-            this.dateConfig.visiblePickers = this.numPickers
+            this.dateConfig.visiblePickers = this.numPickers > 0 ? this.numPickers : 1
 
             this.maxCardWidth = this.maxWidth
     

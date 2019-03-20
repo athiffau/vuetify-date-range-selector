@@ -9,7 +9,7 @@ export default {
         "defaultLabel": "Date-range picker"
     },
     "dateRangeShortcuts": {
-        "drawerTitle": "Picker Options",
+        "drawerTitle": "Range Shortcuts",
         "select": "select",
         "year": "year",
         "quarter": "quarter",

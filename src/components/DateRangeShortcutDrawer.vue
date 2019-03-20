@@ -33,17 +33,18 @@
                     <v-list-group
                         v-for="(option,index) in pickerOptions" 
                         :key="index"
-                        v-model="option.active"
+                        v-model="option.show"
                         :prepend-icon="option.icon"
                         no-action
-                    >
+                        v-if="option.visible"
+                    > 
                         <v-list-tile slot="activator">
                             <v-list-tile-title>{{ $vuetify.t(option.title) }}</v-list-tile-title>
                         </v-list-tile>
 
                         <v-list-tile-content>
                             <v-layout align-center justify-start column fill-height>                                
-                               
+                            
                                 <template v-if="option.type === 'group'">
                                     <v-btn-toggle style="flex-direction: column; width: 100%;" v-model="btnGroup">
                                         <template v-for="(compo,index) in option.options">
@@ -77,7 +78,7 @@
                                         </template>
                                     </v-btn-toggle>
                                 </template>
-                                  
+                                
                                 <template v-else>
                                     <template v-for="(compo,index) in option.options">
                                         <v-layout v-if="(allowBackInTime || evaluate(compo.if))" row fill-height :key="index" class="mx-3 py-1"> 
@@ -110,7 +111,6 @@
                                                             getSiblingData(option, compo.needs) || null,
                                                             compo.if
                                                         )"
-                                                :value="compo.isOpen"
                                                 v-bind:compo="compo"
                                                 v-model="compo.value"
                                             
@@ -118,6 +118,7 @@
                                                 <template
                                                     slot="selection"
                                                     slot-scope="{item, index}"
+                                                    v-bind:compo="compo"
                                                 >
                                                     <template v-if="item.text.length > 5">
                                                         <template v-if="compo.value.length === 1">
@@ -159,7 +160,6 @@
                         
                             </v-layout>
                         </v-list-tile-content>
-
                     </v-list-group>
                 </v-list>
             </v-flex>

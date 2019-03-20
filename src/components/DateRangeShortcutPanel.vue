@@ -53,7 +53,7 @@
                                 :multiple="compo.multiple"
                                 :no-data-text="$vuetify.t(compo.label)"
                                 :prepend-icon="compo.icon"
-                                :ref="compo.ref"
+                       
                                 :single-line=true
                                 :small-chips=true
                                 style="max-width:220px;"
@@ -65,7 +65,7 @@
                                             getSiblingData(option, compo.needs) || null,
                                             compo.if
                                         )"
-                                :value="compo.isOpen"
+                                
                                 v-bind:compo="compo"
                                 v-model="compo.value"
                             >

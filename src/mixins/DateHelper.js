@@ -36,6 +36,35 @@
     }
 
     /**
+     * dateFromYear converts a year as string or number to a Javascript Date object
+     * set at midnight January 1st.
+     * 
+     * @param {String | Number} year    A year expressed as YYYY
+     * 
+     * @return {Date}                   Javascript Date object
+     *                                  If year is invalid format, Date will be equivalent
+     *                                  to now()
+     *  
+     */
+    export function dateFromYear (year) {
+        let _d
+
+        if (typeof year === 'number') {
+            _d = new Date(year.toString())
+        }
+
+        if (typeof year === 'string') {
+            _d = new Date(year)
+        }
+
+        if (_d && typeof _d.toString === 'function') { 
+            return _d
+        } else {
+            return new Date()
+        } 
+    }
+
+    /**
      * dateRangeText accepts a set of dates (2) as an array and returns a hyphenated
      * string.
      * 
@@ -201,9 +230,10 @@
      * 
      */
     export function validateDate (date, fallback = null) {
+        //console.log(`DateHelper.validateDate()`, date, fallback)
         let _d = null
         if (date && typeof date === 'number') {
-            _d = dateFromStr(date.toString())
+            _d = dateFromYear(date)
         } else if (date && typeof date === 'string') {
             _d = dateFromStr(date)
         } else if (date && typeof date.toISOString === 'function') {
@@ -253,6 +283,7 @@
 export default {
     methods: {
         dateFromStr: dateFromStr,
+        dateFromYear: dateFromYear,
         dateRangeText: dateRangeText,
         dateRangeToStr: dateRangeToStr,
         dateToStr: dateToStr,

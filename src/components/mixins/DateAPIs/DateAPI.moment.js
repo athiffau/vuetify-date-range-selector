@@ -32,7 +32,6 @@ import { dateToISOStr, deltaDate, validateDate } from '../../../mixins/DateHelpe
 /*prvate*/ function momentWeekNumbers (date) {
     let _d = validateDate(date)
     let _dy = _d ? _d.getFullYear() : moment().year()
-
     let _data = []
     let _weeks = moment().weeksInYear([_dy])
     _data[0] = {year: _dy}
@@ -207,7 +206,6 @@ import { dateToISOStr, deltaDate, validateDate } from '../../../mixins/DateHelpe
 /*private*/ function momentGetPeriodDates (date, periodNumber) {
     let _pn = parseInt(periodNumber) || 1
     let _data = momentPeriodNumbers(date)
-
     return [ dateToISOStr(_data[_pn].start), dateToISOStr(_data[_pn].end) ]
 }
 
@@ -368,6 +366,7 @@ export default {
          */
         getPeriodDates (date = null, periodNumber = 1) {
             let _pn = parseInt(periodNumber, 10) || 1
+            console.log('date is :',date)
             let _data = momentPeriodNumbers(date)
 
             return [ dateToISOStr(_data[_pn].start), dateToISOStr(_data[_pn].end) ]

@@ -29,7 +29,6 @@ export default {
                 if (!this.pauseWatcher && Array.isArray(val) && Array.isArray(prev)) {
                     if (val.length === 0 && prev.length !== 0) {
                         //console.log(`val.length=${val.length}, prev.length=${prev.length}`)
-                        //this.clearCurrentAction()
                         this.clearSelection()
                         this.btnGroup = null
                     } 
@@ -53,7 +52,7 @@ export default {
             if (!_dates.length) {
                 this.pauseWatcher = true
             }
-            this.updateDateRange(_dates)
+            this.updateDateRange(_dates.sort())
         },
 
         /**
@@ -65,7 +64,7 @@ export default {
          * 
          * @return {Any | null}             Result of function if found or `null`
          */
-        buildSelectionList (fnName) {
+        buildSelectionList (/* String */ fnName) {
             let _fn = this[fnName]
             if ( _fn ) return _fn()
         },

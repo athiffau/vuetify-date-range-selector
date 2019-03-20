@@ -9,7 +9,6 @@ export default {
         now: null,
         pickerOptions: [ 
             { 
-                active: false,
                 groupModel: null,
                 icon: 'fastfood',
                 show: false,
@@ -65,6 +64,7 @@ export default {
                     {
                         action: 'onClickNext3Months',
                         icon: '',
+                        if: undefined,
                         loading: false,
                         title: '$vuetify.dateRangeShortcuts.fastFood.next3Months',
                         type: 'v-btn',
@@ -73,7 +73,6 @@ export default {
                 ] 
             },
             { 
-                active: false,
                 groupModel: null,
                 icon: 'calendar_today',
                 show: false,
@@ -128,7 +127,6 @@ export default {
                 ] 
             },
             {
-                active: false,
                 groupModel: null,
                 icon: 'attach_money',
                 show: false,
@@ -462,16 +460,17 @@ export default {
          * @return {void} 
          */
         onClickNext3Months (dateInView, event, value, ...params) {
-
+            console.log('onClickNext3Months', dateInView, event, value, params)
             let _dates = []
             if (this.btnGroup !== undefined && this.btnGroup !== null) {
+                console.log('btnGroup: ',this.btnGroup)
                 let _d = this.dateStartOfMonth( this.validateDate(this.startDate ? dateInView : null) ).add(1, 'months')
                 _dates.push( this.dateToISOStr( _d ))
                 _d.add(2, 'months')
                 _dates.push( this.dateToISOStr(this.dateEndOfMonth(_d)) )
 
                 let [action, conditions] = params
-                if (typeof conditions === 'undefined' || this.evaluate(conditions, _dates)) {
+                if (typeof conditions === 'undefined' || (Array.isArray(conditions) && conditions.every(val => val === undefined)) || this.evaluate(conditions, _dates)) {
                     this.setDateRange(_dates)
                 } else {
                     this.processMode(_dates)
@@ -519,6 +518,16 @@ export default {
             //with mutli-select we can find out what has been added to the list like this...
             //let _diff = event.filter(elem => !value.includes(elem))
             
+            if (!this.multiRange && Array.isArray(event) && event.length > 1) {
+                let _ev = event.slice()
+                _ev.sort()
+                let _sequentail = _ev.every((num,i) => {
+                        let _test = i === _ev.length - 1 || _ev[i+1] === num + 1
+                        return _test
+                })                
+                if (!_sequentail) this.warningSingleRangeMode()
+            }
+            
             let [action, conditions] = params
             if (typeof conditions === 'undefined' || event.every(week => week > this.currentWeek()) || this.evaluate(conditions, event)) {
                 this.setDateRange(_dates)
@@ -552,10 +561,21 @@ export default {
          * @return {void} 
          */
         onClickCalMonthSelect ( dateInView, event, value, ...params ) {
+            //console.log('DateRangeShortcutsFinance.onClickCalMonthSelect()', {date: dateInView, event:event, value: value, params: params})
             let _dates = []
             event.map( (val, index) => {
                 _dates.push(...this.getMonthDates( null, val ))
             })
+
+            if (!this.multiRange && Array.isArray(event) && event.length > 1) {
+                let _ev = event.slice()
+                _ev.sort()
+                let _sequentail = _ev.every((num,i) => {
+                        let _test = i === _ev.length - 1 || _ev[i+1] === num + 1
+                        return _test
+                })                
+                if (!_sequentail) this.warningSingleRangeMode()
+            }
 
             let [action, conditions] = params
             if (typeof conditions === 'undefined' || this.evaluate(conditions, event)) {
