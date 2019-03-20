@@ -1,7 +1,7 @@
 # Vuetify date-range-picker
 A date range picker based on [Vueitfy](https://vuetifyjs.com) 
 
-![alt text](./public/date-range-picker.png "DateRange Picker - Default settings")
+![alt text](./public/date-range-picker.PNG "DateRange Picker - Default settings")
 
 ## API
 
@@ -128,7 +128,7 @@ as `this week`, `last week` and `last month`. The purpose is to provide one-clic
 used date ranges.  Typically these shortcuts would extend the required size of the date picker by adding a <br/>
 seperate section such as this implementation:
 
-![alt text](./public/date-range-shortcuts.png "DateRange Shortucts")
+![alt text](./public/date-range-shortcuts.PNG "DateRange Shortucts")
 
 To accomplish this, the date-range-picker component implements two slots named `drawerOptions` and `panelOptions`.<br/>
 Instead of occupying precious pixel real estate for the shortcut controls, this date-range-picker attempts to offer
