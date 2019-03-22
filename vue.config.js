@@ -6,7 +6,7 @@ module.exports = {
     : '/',
   
   // set output dir
-  outputDir: 'dist',
+  outputDir: 'docs',
 
   // no source maps in production
   productionSourceMap: false
