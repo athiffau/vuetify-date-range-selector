@@ -19,5 +19,3 @@ export default {
         }
     }
 }
-
-// export default Vue => Vue.component(VDateRangePicker.name, VDateRangePicker)

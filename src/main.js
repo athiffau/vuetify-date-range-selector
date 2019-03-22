@@ -10,13 +10,14 @@ import en from './components/lang/en.js'
 import fr from './components/lang/fr.js'
 
 Vue.use(Vuetify, {
-    lang: {
-        locales: { en, fr },
-    }
+  lang: {
+    locales: { en, fr }
+  }
 })
+
+Vue.config.productionTip = false
 
 /* eslint-disable no-new */
 new Vue({
-    el: '#app',
-    render: h => h(App)
-})
+  render: h => h(App),
+}).$mount('#app')

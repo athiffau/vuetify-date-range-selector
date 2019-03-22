@@ -1,7 +1,35 @@
 # Vuetify date-range-picker
 A date range picker based on [Vueitfy](https://vuetifyjs.com) 
 
-![alt text](./public/date-range-picker.PNG "DateRange Picker - Default settings")
+## Project setup
+```
+npm install
+```
+
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Run your tests
+```
+npm run test
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+# VDateRangePicker
+Live demo : [athiffau.github.io/vuetify-date-range-selector](https://athiffau.github.io/vuetify-date-range-selector)
+
+![alt text](./assets/date-range-picker.PNG "DateRange Picker - Default settings")
 
 ## API
 
@@ -128,7 +156,7 @@ as `this week`, `last week` and `last month`. The purpose is to provide one-clic
 used date ranges.  Typically these shortcuts would extend the required size of the date picker by adding a <br/>
 seperate section such as this implementation:
 
-![alt text](./public/date-range-shortcuts.PNG "DateRange Shortucts")
+![alt text](./assets/date-range-shortcuts.PNG "DateRange Shortucts")
 
 To accomplish this, the date-range-picker component implements two slots named `drawerOptions` and `panelOptions`.<br/>
 Instead of occupying precious pixel real estate for the shortcut controls, this date-range-picker attempts to offer
@@ -136,13 +164,13 @@ the same functionality that users have come to expect with the following scheme:
 
 - drawerOptions: The draawerOptions slot, as the name suggests, adds a temporary drawer to the date-range-picker UI.
 
-![alt text](./public/date-range-drawer.gif "DateRange Drawer")
+![alt text](./assets/date-range-drawer.gif "DateRange Drawer")
 
 *When the is slot is populated, the UI automatically displays a button in the action tray to activate the drawer.*
 
 - panelOptions: The panelOptions slot on the other hand adds controls right-justified within the action tray.
 
-![alt text](./public/date-range-panel.gif "DateRange Panel")
+![alt text](./assets/date-range-panel.gif "DateRange Panel")
 
 *The panel displays component sets within horizontal expansion panels that are useful in reducing the amount for horizontal space for large component sets.*
 
@@ -199,7 +227,7 @@ Each object should contain one or more objects defined as follows:
 | value         | Any           | none      | Optional; base value or component model
 
 ## Shortcuts combined with the `allowBackInTime` prop
-![alt text](./public/date-range-fuzzy-15fps.gif "DateRange Picker - Fuzzy date filtering")
+![alt text](./assets/date-range-fuzzy-15fps.gif "DateRange Picker - Fuzzy date filtering")
 
 Providing a date-range picker with range selection shortcuts while disallowing past dates *can* become problematic. To help compose with this configuration without reverting to implementing multple shortcut components, date-range picker provides the following functionality:
 
