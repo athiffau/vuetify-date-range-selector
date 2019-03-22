@@ -55,13 +55,13 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/vuetify-date-range-selector/',
+    assetsPublicPath: '',
 
     /**
      * Source Maps
      */
 
-    productionSourceMap: false,
+    productionSourceMap: true,
     // https://webpack.js.org/configuration/devtool/#production
     devtool: '#source-map',
 
