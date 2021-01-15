@@ -1,6 +1,6 @@
 {
   "name": "vuetify-daterange-selector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "browser": {
     "./sfc": "src/components/DateRangePicker.vue"
   },
@@ -36,9 +36,9 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.0",
     "@vue/cli-plugin-eslint": "^3.5.0",
-    "@vue/cli-service": "^3.5.0",
+    "@vue/cli-service": "^4.5.10",
     "babel-eslint": "^10.0.1",
-    "bili": "^4.7.1",
+    "bili": "^5.0.5",
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0",
     "material-design-icons-iconfont": "^4.0.5",
