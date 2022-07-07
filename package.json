@@ -42,7 +42,7 @@
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0",
     "material-design-icons-iconfont": "^4.0.5",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-vue": "^4.7.2",
     "stylus": "^0.54.5",
