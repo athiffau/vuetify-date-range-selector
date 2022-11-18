@@ -36,7 +36,7 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.0",
     "@vue/cli-plugin-eslint": "^3.5.0",
-    "@vue/cli-service": "^4.5.10",
+    "@vue/cli-service": "^5.0.8",
     "babel-eslint": "^10.0.1",
     "bili": "^5.0.5",
     "eslint": "^5.8.0",
@@ -44,7 +44,7 @@
     "material-design-icons-iconfont": "^4.0.5",
     "moment": "^2.24.0",
     "rollup-plugin-babel": "^4.3.2",
-    "rollup-plugin-vue": "^4.7.2",
+    "rollup-plugin-vue": "^6.0.0",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
     "vue-responsive-components": "^0.2.3",
